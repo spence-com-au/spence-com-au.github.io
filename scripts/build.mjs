@@ -71,4 +71,5 @@ const items = await Promise.all((await listRepos()).map(item));
 await mkdir(OUT, { recursive: true });
 await writeFile(`${OUT}/index.html`, template.replace('<!-- repos -->', items.join('\n        ')));
 await copyFile('CNAME', `${OUT}/CNAME`);
+await copyFile('index.css', `${OUT}/index.css`);
 console.log(`Linked ${items.length} repos`);
