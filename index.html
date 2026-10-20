@@ -48,28 +48,14 @@
   <body>
     <main>
       <h1 hidden>spence.com.au</h1>
-      <ul>
-        <li>
-          <a href="/dino-park/"><img src="/dino-park/icon.svg" alt="" />Dino Park</a>
-        </li>
-        <li>
-          <a href="/electronics-kit/"><img src="/electronics-kit/icon.svg" alt="" />Electronics Kit</a>
-        </li>
-        <li>
-          <a href="/pogo-utils/"><img src="/pogo-utils/icon.svg" alt="" />PoGo Utils</a>
-        </li>
-      </ul>
+      <ul></ul>
     </main>
     <script>
-      // Replace the static list above with a link to every public repo in the
-      // spence-com-au account. The static list stays as the fallback if the
-      // GitHub API can't be reached.
+      // Link to every public repo in the spence-com-au account.
       (async () => {
         const list = document.querySelector('ul');
-        // Keep hand-written titles (e.g. "PoGo Utils") for repos already listed.
-        const titles = new Map(
-          [...list.querySelectorAll('a')].map((a) => [a.pathname.replaceAll('/', ''), a.textContent.trim()]),
-        );
+        // Titles that can't be derived from the repo name.
+        const titles = new Map([['pogo-utils', 'PoGo Utils']]);
         const title = (name) =>
           titles.get(name) ?? name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -105,7 +91,7 @@
             li.append(a);
             return li;
           });
-        if (items.length) list.replaceChildren(...items);
+        list.append(...items);
       })();
     </script>
   </body>
