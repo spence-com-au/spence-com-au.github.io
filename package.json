@@ -5,11 +5,18 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "lint": "npm-run-all --continue-on-error --parallel --print-label 'lint:!(fix)'",
-    "lint:fix": "npm-run-all --print-label --serial lint:prettier:fix",
+    "lint:fix": "npm-run-all --print-label --serial lint:js:fix lint:prettier:fix",
+    "lint:js": "eslint .",
+    "lint:js:fix": "eslint --fix .",
     "lint:prettier": "prettier --check .",
     "lint:prettier:fix": "prettier --write ."
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "eslint": "10.13.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "^17.13.0",
     "npm-run-all2": "^9.0.3",
     "prettier": "3.9.10"
   },

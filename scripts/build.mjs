@@ -18,18 +18,31 @@ const unescape = (s) =>
 
 async function listRepos() {
   const headers = { Accept: 'application/vnd.github+json' };
-  if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  }
+
   const repos = [];
+
   for (let page = 1; ; page++) {
     const res = await fetch(
       `https://api.github.com/users/${OWNER}/repos?type=owner&sort=full_name&per_page=100&page=${page}`,
       { headers },
     );
-    if (!res.ok) throw new Error(`Listing repos failed: ${res.status} ${await res.text()}`);
+
+    if (!res.ok) {
+      throw new Error(`Listing repos failed: ${res.status} ${await res.text()}`);
+    }
+
     const batch = await res.json();
     repos.push(...batch);
-    if (batch.length < 100) break;
+
+    if (batch.length < 100) {
+      break;
+    }
   }
+
   return repos.filter((repo) => !repo.private && repo.name !== SITE_REPO);
 }
 
@@ -40,14 +53,23 @@ async function title(repo) {
     try {
       const res = await fetch(`https://${DOMAIN}/${repo.name}/`);
       const match = res.ok && (await res.text()).match(/<title[^>]*>([^<]*)<\/title>/i);
-      if (match && match[1].trim()) return unescape(match[1].trim());
-    } catch {}
+
+      if (match && match[1].trim()) {
+        return unescape(match[1].trim());
+      }
+    } catch {
+      // An unreachable site gets the derived title below, the same as one without a `<title>`.
+    }
   }
+
   return repo.name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 async function hasIcon(repo) {
-  if (!repo.has_pages) return false;
+  if (!repo.has_pages) {
+    return false;
+  }
+
   try {
     return (await fetch(`https://${DOMAIN}/${repo.name}/icon.svg`, { method: 'HEAD' })).ok;
   } catch {
@@ -65,7 +87,11 @@ async function item(repo) {
 }
 
 const template = await readFile('index.html', 'utf8');
-if (!template.includes('<!-- repos -->')) throw new Error('index.html is missing the <!-- repos --> placeholder');
+
+if (!template.includes('<!-- repos -->')) {
+  throw new Error('index.html is missing the <!-- repos --> placeholder');
+}
+
 const items = await Promise.all((await listRepos()).map(item));
 
 await mkdir(OUT, { recursive: true });
