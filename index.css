@@ -7,6 +7,7 @@ body {
   background: #f4efe6;
   color: #2b2b2b;
 }
+
 ul {
   display: flex;
   flex-wrap: wrap;
@@ -16,6 +17,7 @@ ul {
   padding: 2rem;
   list-style: none;
 }
+
 a {
   display: flex;
   flex-direction: column;
@@ -28,10 +30,12 @@ a {
   font-weight: 600;
   text-decoration: none;
 }
+
 a:hover,
 a:focus-visible {
   background: #fff;
 }
+
 img {
   width: 8rem;
   height: 8rem;
