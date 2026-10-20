@@ -48,63 +48,9 @@
   <body>
     <main>
       <h1 hidden>spence.com.au</h1>
-      <ul></ul>
+      <ul>
+        <!-- repos -->
+      </ul>
     </main>
-    <script>
-      // Link to every public repo in the spence-com-au account.
-      (async () => {
-        const list = document.querySelector('ul');
-        // Use the <title> of a repo's GitHub Pages site, falling back to a
-        // title derived from the repo name (e.g. "dino-park" -> "Dino Park").
-        const title = async (repo) => {
-          if (repo.has_pages) {
-            try {
-              const res = await fetch(`/${repo.name}/`);
-              if (res.ok) {
-                const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-                if (doc.title.trim()) return doc.title.trim();
-              }
-            } catch {}
-          }
-          return repo.name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-        };
-
-        const repos = [];
-        try {
-          for (let page = 1; ; page++) {
-            const res = await fetch(
-              `https://api.github.com/users/spence-com-au/repos?type=owner&sort=full_name&per_page=100&page=${page}`,
-            );
-            if (!res.ok) return;
-            const batch = await res.json();
-            repos.push(...batch);
-            if (batch.length < 100) break;
-          }
-        } catch {
-          return;
-        }
-
-        const items = await Promise.all(
-          repos
-            .filter((repo) => !repo.private && repo.name !== 'spence-com-au.github.io')
-            .map(async (repo) => {
-              const li = document.createElement('li');
-              const a = document.createElement('a');
-              // Repos published with GitHub Pages are served under this domain;
-              // link anything else to its page on GitHub.
-              a.href = repo.has_pages ? `/${repo.name}/` : repo.html_url;
-              if (repo.description) a.title = repo.description;
-              const img = document.createElement('img');
-              img.src = `/${repo.name}/icon.svg`;
-              img.alt = '';
-              img.onerror = () => img.remove();
-              a.append(img, await title(repo));
-              li.append(a);
-              return li;
-            }),
-        );
-        list.append(...items);
-      })();
-    </script>
   </body>
 </html>
