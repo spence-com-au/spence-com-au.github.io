@@ -1,0 +1,38 @@
+---
+name: 'Lint'
+
+on:
+  pull_request: {}
+  push:
+    branches: ['master']
+
+permissions:
+  contents: 'read'
+
+jobs:
+  all:
+    name: 'Lint'
+    needs: 'lint'
+    if: 'always()'
+    runs-on: 'ubuntu-latest'
+    steps:
+      - if: "needs.lint.result != 'success'"
+        run: 'exit 1'
+
+  lint:
+    name: '${{ matrix.check }}'
+    runs-on: 'ubuntu-latest'
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - 'css'
+          - 'html'
+          - 'js'
+          - 'prettier'
+    steps:
+      - uses: 'actions/checkout@v7'
+      - uses: 'pnpm/setup@v3'
+        with:
+          cache: true
+      - run: 'pnpm lint:${{ matrix.check }}'
