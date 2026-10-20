@@ -1,1 +1,8 @@
-_site/
+# Build artefacts
+/_site/
+
+# Claude
+/.claude/worktrees/
+
+# NodeJS
+/node_modules/
