@@ -60,5 +60,53 @@
         </li>
       </ul>
     </main>
+    <script>
+      // Replace the static list above with a link to every public repo in the
+      // spence-com-au account. The static list stays as the fallback if the
+      // GitHub API can't be reached.
+      (async () => {
+        const list = document.querySelector('ul');
+        // Keep hand-written titles (e.g. "PoGo Utils") for repos already listed.
+        const titles = new Map(
+          [...list.querySelectorAll('a')].map((a) => [a.pathname.replaceAll('/', ''), a.textContent.trim()]),
+        );
+        const title = (name) =>
+          titles.get(name) ?? name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+        const repos = [];
+        try {
+          for (let page = 1; ; page++) {
+            const res = await fetch(
+              `https://api.github.com/users/spence-com-au/repos?type=owner&sort=full_name&per_page=100&page=${page}`,
+            );
+            if (!res.ok) return;
+            const batch = await res.json();
+            repos.push(...batch);
+            if (batch.length < 100) break;
+          }
+        } catch {
+          return;
+        }
+
+        const items = repos
+          .filter((repo) => !repo.private && repo.name !== 'spence-com-au.github.io')
+          .map((repo) => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            // Repos published with GitHub Pages are served under this domain;
+            // link anything else to its page on GitHub.
+            a.href = repo.has_pages ? `/${repo.name}/` : repo.html_url;
+            if (repo.description) a.title = repo.description;
+            const img = document.createElement('img');
+            img.src = `/${repo.name}/icon.svg`;
+            img.alt = '';
+            img.onerror = () => img.remove();
+            a.append(img, title(repo.name));
+            li.append(a);
+            return li;
+          });
+        if (items.length) list.replaceChildren(...items);
+      })();
+    </script>
   </body>
 </html>
