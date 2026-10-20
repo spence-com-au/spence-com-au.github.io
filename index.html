@@ -54,10 +54,20 @@
       // Link to every public repo in the spence-com-au account.
       (async () => {
         const list = document.querySelector('ul');
-        // Titles that can't be derived from the repo name.
-        const titles = new Map([['pogo-utils', 'PoGo Utils']]);
-        const title = (name) =>
-          titles.get(name) ?? name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        // Use the <title> of a repo's GitHub Pages site, falling back to a
+        // title derived from the repo name (e.g. "dino-park" -> "Dino Park").
+        const title = async (repo) => {
+          if (repo.has_pages) {
+            try {
+              const res = await fetch(`/${repo.name}/`);
+              if (res.ok) {
+                const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+                if (doc.title.trim()) return doc.title.trim();
+              }
+            } catch {}
+          }
+          return repo.name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        };
 
         const repos = [];
         try {
@@ -74,23 +84,25 @@
           return;
         }
 
-        const items = repos
-          .filter((repo) => !repo.private && repo.name !== 'spence-com-au.github.io')
-          .map((repo) => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            // Repos published with GitHub Pages are served under this domain;
-            // link anything else to its page on GitHub.
-            a.href = repo.has_pages ? `/${repo.name}/` : repo.html_url;
-            if (repo.description) a.title = repo.description;
-            const img = document.createElement('img');
-            img.src = `/${repo.name}/icon.svg`;
-            img.alt = '';
-            img.onerror = () => img.remove();
-            a.append(img, title(repo.name));
-            li.append(a);
-            return li;
-          });
+        const items = await Promise.all(
+          repos
+            .filter((repo) => !repo.private && repo.name !== 'spence-com-au.github.io')
+            .map(async (repo) => {
+              const li = document.createElement('li');
+              const a = document.createElement('a');
+              // Repos published with GitHub Pages are served under this domain;
+              // link anything else to its page on GitHub.
+              a.href = repo.has_pages ? `/${repo.name}/` : repo.html_url;
+              if (repo.description) a.title = repo.description;
+              const img = document.createElement('img');
+              img.src = `/${repo.name}/icon.svg`;
+              img.alt = '';
+              img.onerror = () => img.remove();
+              a.append(img, await title(repo));
+              li.append(a);
+              return li;
+            }),
+        );
         list.append(...items);
       })();
     </script>
