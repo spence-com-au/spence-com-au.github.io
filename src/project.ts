@@ -13,6 +13,6 @@ export interface Project {
   repo: string;
   icon: string | null;
 
-  /** The site manifest's `theme_color` as written there, which `tint` decides whether the card can show. */
+  /** The site manifest's `theme_color` as written there, which `tint` darkens where it would not show. */
   themeColor: string | null;
 }
