@@ -7,7 +7,7 @@
   --ink: #2f2a24;
   --muted: #6b6258;
 
-  /* The edge of a card whose site has no theme colour, or one too pale to show against the cream. */
+  /* The edge of a card whose site has no theme colour for `tint` to darken. */
   --edge: #857b6e;
 }
 

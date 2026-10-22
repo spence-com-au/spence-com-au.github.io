@@ -41,7 +41,7 @@ test('prerenders a card for every repo', async ({ page }) => {
   }
 });
 
-test("edges each card in its site's colour, or the neutral one where that would not show", async ({ page }) => {
+test("edges each card in its site's colour, or the neutral one where it has none", async ({ page }) => {
   const neutral = await page.evaluate(() =>
     getComputedStyle(document.documentElement).getPropertyValue('--edge').trim(),
   );
