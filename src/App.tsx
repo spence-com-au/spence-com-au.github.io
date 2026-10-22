@@ -27,17 +27,27 @@ function Mark({ icon }: { icon: typeof GITHUB }) {
   );
 }
 
-/** Where a card opens — its site, else its app to install, else its code — and what says so beside its title. */
-function destination({ title, site, apk, repo }: Project): { href: string; label?: string; mark?: typeof GITHUB } {
+interface Destination {
+  href: string;
+  label?: string;
+  mark?: typeof GITHUB;
+
+  /** Where the card opens instead on Android, which `src/android.ts` switches it to, since only Android installs an APK. */
+  android?: { href: string; label: string };
+}
+
+/** Where a card opens — its site, else its app's release, else its code — and what says so beside its title. */
+function destination({ title, site, apk, repo }: Project): Destination {
   if (site) {
     return { href: site };
   }
 
   if (apk) {
     return {
-      href: apk.href,
-      label: `Download ${title} ${apk.version} for Android`,
+      href: apk.release,
+      label: `${title} ${apk.version} release on GitHub`,
       mark: ANDROID,
+      android: { href: apk.href, label: `Download ${title} ${apk.version} for Android` },
     };
   }
 
@@ -46,7 +56,7 @@ function destination({ title, site, apk, repo }: Project): { href: string; label
 
 function Card({ project }: { project: Project }) {
   const { title, description, apk, repo, icon, themeColor } = project;
-  const { href, label, mark } = destination(project);
+  const { href, label, mark, android } = destination(project);
 
   return (
     <li className="card" style={{ '--tint': tint(themeColor) } as CSSProperties}>
@@ -58,7 +68,13 @@ function Card({ project }: { project: Project }) {
         </span>
       )}
       <h2>
-        <a className="open" href={href} aria-label={label}>
+        <a
+          className="open"
+          href={href}
+          aria-label={label}
+          data-android-href={android?.href}
+          data-android-label={android?.label}
+        >
           {/*
            * A mark is bound to the title's last word so that a title that wraps takes it along rather than leaving it
            * alone on a line. A no-break space cannot, since a line may break beside an `<svg>` whatever is next to it.

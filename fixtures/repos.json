@@ -5,6 +5,7 @@
     "site": null,
     "apk": {
       "href": "https://github.com/spence-com-au/car-racer/releases/download/v0.12.1/CarRacer.apk",
+      "release": "https://github.com/spence-com-au/car-racer/releases/tag/v0.12.1",
       "version": "v0.12.1"
     },
     "repo": "https://github.com/spence-com-au/car-racer",

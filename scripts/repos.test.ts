@@ -46,6 +46,7 @@ const releases = (name: string, body: object[] = []) => ({
 /** A release as GitHub's API returns it, holding only the fields `listProjects` reads. */
 const release = (tag: string, assets: string[], overrides: object = {}) => ({
   tag_name: tag,
+  html_url: `https://github.com/spence-com-au/car-racer/releases/tag/${tag}`,
   draft: false,
   prerelease: false,
   assets: assets.map((name) => ({ name, browser_download_url: `https://example.test/${tag}/${name}` })),
@@ -82,7 +83,14 @@ describe('listProjects', () => {
     };
 
     expect(await listProjects(DOMAIN)).toMatchObject([
-      { site: null, apk: { href: 'https://example.test/v1.1.0/CarRacer-v1.1.0.APK', version: 'v1.1.0' } },
+      {
+        site: null,
+        apk: {
+          href: 'https://example.test/v1.1.0/CarRacer-v1.1.0.APK',
+          release: 'https://github.com/spence-com-au/car-racer/releases/tag/v1.1.0',
+          version: 'v1.1.0',
+        },
+      },
     ]);
   });
 

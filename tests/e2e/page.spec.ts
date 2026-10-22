@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { devices, expect, test } from '@playwright/test';
 import { formatRgb } from 'culori';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
@@ -21,11 +21,11 @@ test('prerenders a card for every repo', async ({ page }) => {
     const open = card.getByRole('heading').getByRole('link');
     const source = card.getByRole('link', { name: `Source code for ${project.title} on GitHub` });
 
-    // A card opens its site, else its app to install, else its code, and only the first two need a source link too.
+    // A card opens its site, else its app's release, else its code, and only the first two need a source link too.
     const [href, name] = project.site
       ? [project.site, project.title]
       : project.apk
-        ? [project.apk.href, `Download ${project.title} ${project.apk.version} for Android`]
+        ? [project.apk.release, `${project.title} ${project.apk.version} release on GitHub`]
         : [project.repo, `${project.title} on GitHub`];
 
     await expect(open).toHaveAttribute('href', href);
@@ -86,6 +86,32 @@ test('paints the background the tints are checked against', async ({ page }) => 
   await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUND) ?? '');
 });
 
-test('ships no JavaScript', async ({ page }) => {
-  await expect(page.locator('script')).toHaveCount(0);
+test('ships no script but the one that points Android at its downloads', async ({ page }) => {
+  await expect(page.locator('script')).toHaveCount(1);
+  await expect(page.locator('script')).toHaveAttribute('type', 'module');
+});
+
+test.describe('with scripts on', () => {
+  test.use({ javaScriptEnabled: true });
+
+  const project = projects.find((p) => p.apk);
+  const open = (page: import('@playwright/test').Page) =>
+    page
+      .getByRole('listitem')
+      .filter({ has: page.getByRole('heading', { name: project?.title }) })
+      .getByRole('heading')
+      .getByRole('link');
+
+  test.describe('on Android', () => {
+    test.use({ userAgent: devices['Pixel 7'].userAgent });
+
+    test('downloads an app from its card', async ({ page }) => {
+      await expect(open(page)).toHaveAttribute('href', project?.apk?.href ?? '');
+      await expect(open(page)).toHaveAccessibleName(`Download ${project?.title} ${project?.apk?.version} for Android`);
+    });
+  });
+
+  test("opens an app's release page anywhere else", async ({ page }) => {
+    await expect(open(page)).toHaveAttribute('href', project?.apk?.release ?? '');
+  });
 });

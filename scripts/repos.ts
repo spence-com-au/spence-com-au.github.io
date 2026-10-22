@@ -33,6 +33,7 @@ interface ManifestIcon {
 /** The fields of GitHub's release object this reads. */
 interface Release {
   tag_name: string;
+  html_url: string;
   draft: boolean;
   prerelease: boolean;
   assets: { name: string; browser_download_url: string }[];
@@ -154,7 +155,7 @@ async function findApk(repo: Repo): Promise<Project['apk']> {
     const apk = release.assets.find((asset) => /\.apk$/i.test(asset.name));
 
     if (apk && !release.draft && !release.prerelease) {
-      return { href: apk.browser_download_url, version: release.tag_name };
+      return { href: apk.browser_download_url, release: release.html_url, version: release.tag_name };
     }
   }
 
