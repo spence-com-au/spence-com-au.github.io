@@ -42,7 +42,7 @@ h1 {
 
 /**
  * A toy block: a solid edge in the site's own colour rather than a shadow, which the card sinks onto when pressed so a
- * tap answers at once, before the game has started to load.
+ * tap answers at once, before the site has started to load.
  */
 .card {
   --edge-color: var(--tint, var(--edge));
@@ -105,7 +105,7 @@ h2 {
   outline: none;
 }
 
-/* Stretched over the whole card, border included, so a tap anywhere on it opens the game. */
+/* Stretched over the whole card, border included, so a tap anywhere on it opens the site. */
 .open::after {
   content: '';
   position: absolute;

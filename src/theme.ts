@@ -7,7 +7,7 @@ export const BACKGROUND = '#f4efe6';
  * The colour a card's edge takes from its site's theme, or nothing for the neutral edge when there is none to take.
  * WCAG asks 3:1 of a component's boundary against what surrounds it, and a theme colour picked for a browser's toolbar
  * often falls short, so one that does is darkened until it reaches it. Lightness alone changes, in OKLCH, so the shade
- * keeps the hue a child knows the game by.
+ * keeps the hue a site is known by.
  */
 export function tint(themeColor: string | null): string | undefined {
   const color = themeColor && oklch(themeColor);

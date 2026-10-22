@@ -53,7 +53,7 @@ test("edges each card in its site's colour, or the neutral one where it has none
   }
 });
 
-test('opens a game from anywhere on its card, but its source from the source link', async ({ page }) => {
+test('opens a site from anywhere on its card, but its source from the source link', async ({ page }) => {
   const project = projects.find((p) => p.site && p.description);
   const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project?.title }) });
 
