@@ -1,5 +1,5 @@
 // Build the site into _site/, filling index.html with a link to every public
-// repo in the spence-com-au account.
+// project repo in the spence-com-au account.
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const OWNER = 'spence-com-au';
@@ -43,7 +43,8 @@ async function listRepos() {
     }
   }
 
-  return repos.filter((repo) => !repo.private && repo.name !== SITE_REPO);
+  // A repo whose name starts with a dot, such as `.github`, configures the account rather than being a project.
+  return repos.filter((repo) => !repo.private && repo.name !== SITE_REPO && !repo.name.startsWith('.'));
 }
 
 // Use the <title> of a repo's GitHub Pages site, falling back to a title
