@@ -1,42 +1,203 @@
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  font-family: system-ui, sans-serif;
-  background: #f4efe6;
-  color: #2b2b2b;
+@import url('@fontsource-variable/baloo-2');
+
+:root {
+  /* `BACKGROUND` in `src/theme.ts`, which checks each card's tint against it. */
+  --cream: #f4efe6;
+  --paper: #fffbf4;
+  --ink: #2f2a24;
+  --muted: #6b6258;
+
+  /* The edge of a card whose site has no theme colour for `tint` to darken. */
+  --edge: #857b6e;
 }
 
-ul {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2rem;
+body {
   margin: 0;
-  padding: 2rem;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Baloo 2 Variable', system-ui, sans-serif;
+}
+
+main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem) 4rem;
+}
+
+h1 {
+  margin: 0 0 clamp(1.5rem, 4vw, 2.5rem);
+  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: 2rem 1.5rem;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
 
-a {
+/**
+ * A toy block: a solid edge in the site's own colour rather than a shadow, which the card sinks onto when pressed so a
+ * tap answers at once, before the site has started to load.
+ */
+.card {
+  --edge-color: var(--tint, var(--edge));
+
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  border-radius: 1.5rem;
+  gap: 0.375rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border: 0.25rem solid var(--edge-color);
+  border-radius: 1.75rem;
+  background: var(--paper);
+  box-shadow: 0 0.5rem 0 var(--edge-color);
+  transition:
+    translate 80ms ease-out,
+    box-shadow 80ms ease-out;
+}
+
+.card:has(.open:active) {
+  translate: 0 0.375rem;
+  box-shadow: 0 0.125rem 0 var(--edge-color);
+}
+
+.card:has(.open:focus-visible) {
+  outline: 0.25rem solid var(--ink);
+  outline-offset: 0.375rem;
+}
+
+.tile {
+  width: 6rem;
+  height: 6rem;
+  margin-bottom: 0.5rem;
+  border-radius: 1.375rem;
+}
+
+span.tile {
+  display: grid;
+  place-items: center;
+  background: var(--edge-color);
+  color: var(--paper);
+  font-size: 3.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.625rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.open {
   color: inherit;
-  font-size: 1.25rem;
+  text-decoration: none;
+}
+
+/* The card's focus ring stands in for the title's, since the whole card is what the link opens. */
+.open:focus-visible {
+  outline: none;
+}
+
+/* Stretched over the whole card, border included, so a tap anywhere on it opens the site. */
+.open::after {
+  content: '';
+  position: absolute;
+  inset: -0.25rem;
+  border-radius: inherit;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.open svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-left: 0.375rem;
+  color: var(--muted);
+  vertical-align: -0.0625rem;
+}
+
+.card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.0625rem;
+  line-height: 1.35;
+}
+
+/**
+ * Small and quiet, for the adult who wants the code. Positioned so that it paints above the title's overlay, which
+ * comes before it in the card, and can be tapped through it.
+ */
+.source {
+  position: relative;
+  display: inline-flex;
+  gap: 0.375rem;
+  align-items: center;
+  align-self: flex-start;
+  margin: auto 0 0 -0.5rem;
+  padding: 0.25rem 0.625rem 0.25rem 0.5rem;
+  border-radius: 1rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
   font-weight: 600;
   text-decoration: none;
 }
 
-a:hover,
-a:focus-visible {
-  background: #fff;
+.source:hover {
+  background: var(--cream);
+  color: var(--ink);
 }
 
-img {
-  width: 8rem;
-  height: 8rem;
+.source:focus-visible {
+  outline: 0.1875rem solid var(--ink);
+  outline-offset: 0.125rem;
+}
+
+.source svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* One card to a row on a phone, so the tile moves beside the text rather than spending a screen's height above it. */
+@media (width < 40rem) {
+  .card {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 0.25rem 1rem;
+    align-content: start;
+  }
+
+  .tile {
+    grid-row: span 3;
+    width: 4.5rem;
+    height: 4.5rem;
+    margin: 0;
+    border-radius: 1.125rem;
+  }
+
+  span.tile {
+    font-size: 2.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .source {
+    margin-top: 0.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
 }
