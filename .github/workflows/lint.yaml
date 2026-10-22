@@ -30,6 +30,7 @@ jobs:
           - 'html'
           - 'js'
           - 'prettier'
+          - 'types'
     steps:
       - uses: 'actions/checkout@v7'
       - uses: 'pnpm/setup@v3'

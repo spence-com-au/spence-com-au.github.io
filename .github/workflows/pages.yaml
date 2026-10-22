@@ -28,9 +28,10 @@ jobs:
         with:
           cache: true
 
-      - run: 'pnpm build'
+      - run: 'pnpm fetch:repos'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+      - run: 'pnpm build'
       - uses: 'actions/upload-pages-artifact@v5'
         with:
           path: '_site'
