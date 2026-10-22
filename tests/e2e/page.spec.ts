@@ -21,11 +21,18 @@ test('prerenders a card for every repo', async ({ page }) => {
     const open = card.getByRole('heading').getByRole('link');
     const source = card.getByRole('link', { name: `Source code for ${project.title} on GitHub` });
 
-    await expect(open).toHaveAttribute('href', project.site ?? project.repo);
-    await expect(open).toHaveAccessibleName(project.site ? project.title : `${project.title} on GitHub`);
-    await expect(source).toHaveCount(project.site ? 1 : 0);
+    // A card opens its site, else its app to install, else its code, and only the first two need a source link too.
+    const [href, name] = project.site
+      ? [project.site, project.title]
+      : project.apk
+        ? [project.apk.href, `Download ${project.title} ${project.apk.version} for Android`]
+        : [project.repo, `${project.title} on GitHub`];
 
-    if (project.site) {
+    await expect(open).toHaveAttribute('href', href);
+    await expect(open).toHaveAccessibleName(name);
+    await expect(source).toHaveCount(href === project.repo ? 0 : 1);
+
+    if (href !== project.repo) {
       await expect(source).toHaveAttribute('href', project.repo);
     }
 
@@ -39,6 +46,16 @@ test('prerenders a card for every repo', async ({ page }) => {
       await expect(card.getByText(project.description)).toBeVisible();
     }
   }
+});
+
+test('shows which release an app download installs', async ({ page }) => {
+  const project = projects.find((p) => p.apk);
+
+  // Without an app in the fixture, the card that downloads one would go untested rather than fail.
+  expect(project, 'fixtures/repos.json has no repo with an APK').toBeDefined();
+
+  const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project?.title }) });
+  await expect(card.locator('.version')).toHaveText(project?.apk?.version ?? '');
 });
 
 test("edges each card in its site's colour, or the neutral one where it has none", async ({ page }) => {

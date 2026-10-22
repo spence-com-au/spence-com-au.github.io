@@ -39,20 +39,61 @@ const site = (name: string, manifest: object) => ({
 
 const page = (name: string, html: string) => ({ [`https://${DOMAIN}/${name}/`]: () => new Response(html) });
 
+const releases = (name: string, body: object[] = []) => ({
+  [`https://api.github.com/repos/spence-com-au/${name}/releases?per_page=100`]: () => Response.json(body),
+});
+
+/** A release as GitHub's API returns it, holding only the fields `listProjects` reads. */
+const release = (tag: string, assets: string[], overrides: object = {}) => ({
+  tag_name: tag,
+  draft: false,
+  prerelease: false,
+  assets: assets.map((name) => ({ name, browser_download_url: `https://example.test/${tag}/${name}` })),
+  ...overrides,
+});
+
 describe('listProjects', () => {
   it('links a repo without a site to GitHub, titled from its name', async () => {
-    routes = repos(1, [repo('car-racer', { description: 'Race cars' })]);
+    routes = { ...repos(1, [repo('car-racer', { description: 'Race cars' })]), ...releases('car-racer') };
 
     expect(await listProjects(DOMAIN)).toEqual([
       {
         title: 'Car Racer',
         description: 'Race cars',
         site: null,
+        apk: null,
         repo: 'https://github.com/spence-com-au/car-racer',
         icon: null,
         themeColor: null,
       },
     ]);
+  });
+
+  it('links a repo without a site to the APK in its newest published release that has one', async () => {
+    routes = {
+      ...repos(1, [repo('car-racer')]),
+      ...releases('car-racer', [
+        release('v3.0.0', ['CarRacer-server.tar.gz']),
+        release('v2.1.0', ['CarRacer.apk'], { prerelease: true }),
+        release('v2.0.0', ['CarRacer.apk'], { draft: true }),
+        release('v1.1.0', ['CarRacer-server.tar.gz', 'CarRacer-v1.1.0.APK']),
+        release('v1.0.0', ['CarRacer-v1.0.0.apk']),
+      ]),
+    };
+
+    expect(await listProjects(DOMAIN)).toMatchObject([
+      { site: null, apk: { href: 'https://example.test/v1.1.0/CarRacer-v1.1.0.APK', version: 'v1.1.0' } },
+    ]);
+  });
+
+  it("fails when GitHub cannot list a repo's releases", async () => {
+    routes = {
+      ...repos(1, [repo('car-racer')]),
+      [`https://api.github.com/repos/spence-com-au/car-racer/releases?per_page=100`]: () =>
+        new Response('rate limited', { status: 403 }),
+    };
+
+    await expect(listProjects(DOMAIN)).rejects.toThrow('Listing releases of car-racer failed: 403 rate limited');
   });
 
   it('describes a site from its manifest, preferring an SVG icon to a larger bitmap', async () => {
@@ -75,6 +116,7 @@ describe('listProjects', () => {
         title: 'Dino Park',
         description: 'Look after the dinosaurs.',
         site: '/dino-park/',
+        apk: null,
         repo: 'https://github.com/spence-com-au/dino-park',
         icon: `https://${DOMAIN}/dino-park/icons/icon.svg`,
         themeColor: '#3f9b4f',
@@ -120,6 +162,7 @@ describe('listProjects', () => {
         title: 'Electronics Kit',
         description: 'Circuits',
         site: '/electronics-kit/',
+        apk: null,
         repo: 'https://github.com/spence-com-au/electronics-kit',
         icon: null,
         themeColor: null,
@@ -160,13 +203,15 @@ describe('listProjects', () => {
       repo('spence-com-au.github.io', { has_pages: true }),
       repo('car-racer'),
     ]);
+    routes = { ...routes, ...releases('car-racer') };
 
     expect(await listProjects(DOMAIN)).toMatchObject([{ title: 'Car Racer' }]);
   });
 
   it('reads every page of repos', async () => {
-    const full = Array.from({ length: 100 }, (_, i) => repo(`repo-${String(i).padStart(3, '0')}`));
-    routes = { ...repos(1, full), ...repos(2, [repo('last')]) };
+    // With sites, which Pages does not serve yet, so that the test needs no releases for them.
+    const full = Array.from({ length: 100 }, (_, i) => repo(`repo-${String(i).padStart(3, '0')}`, { has_pages: true }));
+    routes = { ...repos(1, full), ...repos(2, [repo('last', { has_pages: true })]) };
 
     const projects = await listProjects(DOMAIN);
 
