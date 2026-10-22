@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['.claude/worktrees/**', '.ssr/**', '_site/**', 'playwright-report/**', 'test-results/**'],
+    ignores: ['.claude/worktrees/**', 'playwright-report/**', '_site/**', '.ssr/**', 'test-results/**'],
   },
 
   js.configs.recommended,
@@ -30,14 +30,14 @@ export default [
       '@stylistic/lines-around-comment': [
         'error',
         {
-          beforeBlockComment: true,
-          beforeLineComment: true,
+          allowArrayStart: true,
           allowBlockStart: true,
           allowClassStart: true,
-          allowObjectStart: true,
-          allowArrayStart: true,
           allowInterfaceStart: true,
+          allowObjectStart: true,
           allowTypeStart: true,
+          beforeBlockComment: true,
+          beforeLineComment: true,
         },
       ],
     },
