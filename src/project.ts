@@ -6,10 +6,16 @@ export interface Project {
   /** The path of the repo's GitHub Pages site under this domain, or nothing when it publishes none. */
   site: string | null;
 
+  /**
+   * The Android app in the repo's newest release that has one, for a repo without a site: the APK itself, which only
+   * an Android device downloads, and the page of the release it came in, which any other device opens instead.
+   */
+  apk: { href: string; release: string; version: string } | null;
+
   /** The repo's page on GitHub. */
   repo: string;
   icon: string | null;
 
-  /** The site manifest's `theme_color` as written there, which `tint` decides whether the card can show. */
+  /** The site manifest's `theme_color` as written there, which `tint` darkens where it would not show. */
   themeColor: string | null;
 }

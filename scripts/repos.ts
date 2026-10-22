@@ -30,19 +30,32 @@ interface ManifestIcon {
   purpose?: string;
 }
 
-async function listRepos(): Promise<Repo[]> {
+/** The fields of GitHub's release object this reads. */
+interface Release {
+  tag_name: string;
+  html_url: string;
+  draft: boolean;
+  prerelease: boolean;
+  assets: { name: string; browser_download_url: string }[];
+}
+
+function githubHeaders(): Record<string, string> {
   const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
 
   if (process.env.GITHUB_TOKEN) {
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
 
+  return headers;
+}
+
+async function listRepos(): Promise<Repo[]> {
   const repos: Repo[] = [];
 
   for (let page = 1; ; page++) {
     const res = await fetch(
       `https://api.github.com/users/${OWNER}/repos?type=owner&sort=full_name&per_page=100&page=${page}`,
-      { headers },
+      { headers: githubHeaders() },
     );
 
     if (!res.ok) {
@@ -124,10 +137,38 @@ function pickIcon(icons: ManifestIcon[]): ManifestIcon | undefined {
   );
 }
 
+/**
+ * The APK in the newest published release that has one. A release can ship without it, as `car-racer`'s `v0.12.0` did,
+ * and its name has carried the version before, so it is looked up rather than linked through `releases/latest`. GitHub
+ * lists releases newest first, and the first page is as far back as anyone would want to install from.
+ */
+async function findApk(repo: Repo): Promise<Project['apk']> {
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${repo.name}/releases?per_page=100`, {
+    headers: githubHeaders(),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Listing releases of ${repo.name} failed: ${res.status} ${await res.text()}`);
+  }
+
+  for (const release of (await res.json()) as Release[]) {
+    const apk = release.assets.find((asset) => /\.apk$/i.test(asset.name));
+
+    if (apk && !release.draft && !release.prerelease) {
+      return { href: apk.browser_download_url, release: release.html_url, version: release.tag_name };
+    }
+  }
+
+  return null;
+}
+
 async function toProject(domain: string, repo: Repo): Promise<Project> {
   const site = repo.has_pages ? new URL(`https://${domain}/${repo.name}/`) : null;
   const { manifest, url } = (site && (await readManifest(site))) ?? { manifest: {}, url: null };
   const icon = url && pickIcon(manifest.icons ?? []);
+
+  // A repo with a site is opened there, so only one without needs a release to link instead.
+  const apk = site ? null : await findApk(repo);
 
   return {
     // The short name is the label a site's author chose for a launcher's icon, which is what this page is.
@@ -135,6 +176,7 @@ async function toProject(domain: string, repo: Repo): Promise<Project> {
       manifest.short_name || manifest.name || repo.name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
     description: manifest.description || repo.description,
     site: site?.pathname ?? null,
+    apk,
     repo: repo.html_url,
     icon: icon && url ? new URL(icon.src, url).href : null,
     themeColor: manifest.theme_color ?? null,

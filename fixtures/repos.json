@@ -1,8 +1,13 @@
 [
   {
     "title": "Car Racer",
-    "description": null,
+    "description": "An arcade, bump-heavy 3D kart racer for Android.",
     "site": null,
+    "apk": {
+      "href": "https://github.com/spence-com-au/car-racer/releases/download/v0.12.1/CarRacer.apk",
+      "release": "https://github.com/spence-com-au/car-racer/releases/tag/v0.12.1",
+      "version": "v0.12.1"
+    },
     "repo": "https://github.com/spence-com-au/car-racer",
     "icon": null,
     "themeColor": null
@@ -11,6 +16,7 @@
     "title": "Claude Code Action",
     "description": "Reusable GitHub workflow that has Claude review, then approve or request changes on, a pull request",
     "site": null,
+    "apk": null,
     "repo": "https://github.com/spence-com-au/claude-code-action",
     "icon": null,
     "themeColor": null
@@ -19,6 +25,7 @@
     "title": "Dino Park",
     "description": "Drive around a dinosaur park and look after the dinosaurs.",
     "site": "/dino-park/",
+    "apk": null,
     "repo": "https://github.com/spence-com-au/dino-park",
     "icon": "https://spence.com.au/dino-park/icon.svg",
     "themeColor": "#3f9b4f"
@@ -27,6 +34,7 @@
     "title": "Circuits",
     "description": "Build circuits on a virtual breadboard and learn how electricity works.",
     "site": "/electronics-kit/",
+    "apk": null,
     "repo": "https://github.com/spence-com-au/electronics-kit",
     "icon": "https://spence.com.au/electronics-kit/icon.svg",
     "themeColor": "#f28c28"
@@ -35,6 +43,7 @@
     "title": "PoGo Utils",
     "description": "Events calendar, GPX route map, search strings, a Pokédex, exports for PGSharp and Live PokeMap, and a reader for a Pokémon's detail screen.",
     "site": "/pogo-utils/",
+    "apk": null,
     "repo": "https://github.com/spence-com-au/pogo-utils",
     "icon": "https://spence.com.au/pogo-utils/icons/512.png",
     "themeColor": "#ffffff"

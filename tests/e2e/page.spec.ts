@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { devices, expect, test } from '@playwright/test';
 import { formatRgb } from 'culori';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
@@ -21,11 +21,18 @@ test('prerenders a card for every repo', async ({ page }) => {
     const open = card.getByRole('heading').getByRole('link');
     const source = card.getByRole('link', { name: `Source code for ${project.title} on GitHub` });
 
-    await expect(open).toHaveAttribute('href', project.site ?? project.repo);
-    await expect(open).toHaveAccessibleName(project.site ? project.title : `${project.title} on GitHub`);
-    await expect(source).toHaveCount(project.site ? 1 : 0);
+    // A card opens its site, else its app's release, else its code, and only the first two need a source link too.
+    const [href, name] = project.site
+      ? [project.site, project.title]
+      : project.apk
+        ? [project.apk.release, `${project.title} ${project.apk.version} release on GitHub`]
+        : [project.repo, `${project.title} on GitHub`];
 
-    if (project.site) {
+    await expect(open).toHaveAttribute('href', href);
+    await expect(open).toHaveAccessibleName(name);
+    await expect(source).toHaveCount(href === project.repo ? 0 : 1);
+
+    if (href !== project.repo) {
       await expect(source).toHaveAttribute('href', project.repo);
     }
 
@@ -39,6 +46,16 @@ test('prerenders a card for every repo', async ({ page }) => {
       await expect(card.getByText(project.description)).toBeVisible();
     }
   }
+});
+
+test('shows which release an app download installs', async ({ page }) => {
+  const project = projects.find((p) => p.apk);
+
+  // Without an app in the fixture, the card that downloads one would go untested rather than fail.
+  expect(project, 'fixtures/repos.json has no repo with an APK').toBeDefined();
+
+  const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project?.title }) });
+  await expect(card.locator('.version')).toHaveText(project?.apk?.version ?? '');
 });
 
 test("edges each card in its site's colour, or the neutral one where it has none", async ({ page }) => {
@@ -69,6 +86,32 @@ test('paints the background the tints are checked against', async ({ page }) => 
   await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUND) ?? '');
 });
 
-test('ships no JavaScript', async ({ page }) => {
-  await expect(page.locator('script')).toHaveCount(0);
+test('ships no script but the one that points Android at its downloads', async ({ page }) => {
+  await expect(page.locator('script')).toHaveCount(1);
+  await expect(page.locator('script')).toHaveAttribute('type', 'module');
+});
+
+test.describe('with scripts on', () => {
+  test.use({ javaScriptEnabled: true });
+
+  const project = projects.find((p) => p.apk);
+  const open = (page: import('@playwright/test').Page) =>
+    page
+      .getByRole('listitem')
+      .filter({ has: page.getByRole('heading', { name: project?.title }) })
+      .getByRole('heading')
+      .getByRole('link');
+
+  test.describe('on Android', () => {
+    test.use({ userAgent: devices['Pixel 7'].userAgent });
+
+    test('downloads an app from its card', async ({ page }) => {
+      await expect(open(page)).toHaveAttribute('href', project?.apk?.href ?? '');
+      await expect(open(page)).toHaveAccessibleName(`Download ${project?.title} ${project?.apk?.version} for Android`);
+    });
+  });
+
+  test("opens an app's release page anywhere else", async ({ page }) => {
+    await expect(open(page)).toHaveAttribute('href', project?.apk?.release ?? '');
+  });
 });
