@@ -1,14 +1,18 @@
 import globals from 'globals';
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier/flat';
+import reactHooks from 'eslint-plugin-react-hooks';
 import stylistic from '@stylistic/eslint-plugin';
+import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['.claude/worktrees/**', '_site/**'],
+    ignores: ['.claude/worktrees/**', '.ssr/**', '_site/**', 'playwright-report/**', 'test-results/**'],
   },
 
   js.configs.recommended,
+  ...tseslint.configs.strict,
+  reactHooks.configs.flat.recommended,
   prettier,
   {
     plugins: { '@stylistic': stylistic },
@@ -32,6 +36,8 @@ export default [
           allowClassStart: true,
           allowObjectStart: true,
           allowArrayStart: true,
+          allowInterfaceStart: true,
+          allowTypeStart: true,
         },
       ],
     },

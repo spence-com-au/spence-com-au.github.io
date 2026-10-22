@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+
+    // `nodenext` because Node runs `scripts/` as it stands, and its resolver is the one that makes a missing extension
+    // an error rather than a module that type-checks and then fails to load. Vite resolves the same specifiers.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+
+    // Node strips the types from `scripts/` rather than compiling them, so nothing here may need a compiler to emit.
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src", "scripts", "tests", "*.ts"]
+}

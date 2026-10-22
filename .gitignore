@@ -1,8 +1,14 @@
 # Build artefacts
+/.ssr/
 /_site/
+/repos.json
 
 # Claude
 /.claude/worktrees/
 
 # NodeJS
 /node_modules/
+
+# Playwright
+/playwright-report/
+/test-results/
