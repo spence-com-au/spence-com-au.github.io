@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties } from 'react';
 
 import type { Project } from './project.ts';
 import { tint } from './theme.ts';
@@ -28,7 +28,7 @@ function Mark({ icon }: { icon: typeof GITHUB }) {
 }
 
 /** Where a card opens — its site, else its app to install, else its code — and what says so beside its title. */
-function destination({ title, site, apk, repo }: Project): { href: string; label?: string; mark?: ReactNode } {
+function destination({ title, site, apk, repo }: Project): { href: string; label?: string; mark?: typeof GITHUB } {
   if (site) {
     return { href: site };
   }
@@ -37,20 +37,15 @@ function destination({ title, site, apk, repo }: Project): { href: string; label
     return {
       href: apk.href,
       label: `Download ${title} ${apk.version} for Android`,
-      mark: (
-        <>
-          <Mark icon={ANDROID} />
-          <span className="version">{apk.version}</span>
-        </>
-      ),
+      mark: ANDROID,
     };
   }
 
-  return { href: repo, label: `${title} on GitHub`, mark: <Mark icon={GITHUB} /> };
+  return { href: repo, label: `${title} on GitHub`, mark: GITHUB };
 }
 
 function Card({ project }: { project: Project }) {
-  const { title, description, repo, icon, themeColor } = project;
+  const { title, description, apk, repo, icon, themeColor } = project;
   const { href, label, mark } = destination(project);
 
   return (
@@ -73,7 +68,7 @@ function Card({ project }: { project: Project }) {
               {title.slice(0, title.lastIndexOf(' ') + 1)}
               <span className="nowrap">
                 {title.slice(title.lastIndexOf(' ') + 1)}
-                {mark}
+                <Mark icon={mark} />
               </span>
             </>
           ) : (
@@ -83,10 +78,13 @@ function Card({ project }: { project: Project }) {
       </h2>
       {description && <p>{description}</p>}
       {href !== repo && (
-        <a className="source" href={repo} aria-label={`Source code for ${title} on GitHub`}>
-          <Mark icon={GITHUB} />
-          Source
-        </a>
+        <div className="footer">
+          <a className="source" href={repo} aria-label={`Source code for ${title} on GitHub`}>
+            <Mark icon={GITHUB} />
+            Source
+          </a>
+          {apk && <span className="version">{apk.version}</span>}
+        </div>
       )}
     </li>
   );
