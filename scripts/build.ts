@@ -23,6 +23,13 @@ if (!page.includes(PLACEHOLDER)) {
   throw new Error(`index.html is missing the ${PLACEHOLDER} placeholder`);
 }
 
-await writeFile('_site/index.html', page.replace(PLACEHOLDER, await render(projects)));
+const app = await render(projects);
+
+// A replacer function, since a replacement string would expand any `$&`, `` $` `` or `$'` in a description.
+await writeFile(
+  '_site/index.html',
+  page.replace(PLACEHOLDER, () => app),
+);
+
 await rm(SSR_OUT, { recursive: true });
 console.log(`Rendered ${projects.length} repos`);
