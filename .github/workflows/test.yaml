@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   e2e:
-    name: 'E2E'
+    name: 'E2E Tests'
     runs-on: 'ubuntu-latest'
     steps:
       - uses: 'actions/checkout@v7.0.1'
@@ -27,7 +27,7 @@ jobs:
           path: 'playwright-report'
 
   unit:
-    name: 'Unit'
+    name: 'Unit Tests'
     runs-on: 'ubuntu-latest'
     steps:
       - uses: 'actions/checkout@v7.0.1'
