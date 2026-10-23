@@ -14,14 +14,14 @@ jobs:
     name: 'E2E'
     runs-on: 'ubuntu-latest'
     steps:
-      - uses: 'actions/checkout@v7'
-      - uses: 'pnpm/setup@v3'
+      - uses: 'actions/checkout@v7.0.1'
+      - uses: 'pnpm/setup@v3.1.1'
         with:
           cache: true
       - run: 'pnpm exec playwright install --with-deps chromium'
       - run: 'pnpm test:e2e'
       - if: '${{ !cancelled() }}'
-        uses: 'actions/upload-artifact@v7'
+        uses: 'actions/upload-artifact@v7.0.2'
         with:
           name: 'playwright-report'
           path: 'playwright-report'
@@ -30,8 +30,8 @@ jobs:
     name: 'Unit'
     runs-on: 'ubuntu-latest'
     steps:
-      - uses: 'actions/checkout@v7'
-      - uses: 'pnpm/setup@v3'
+      - uses: 'actions/checkout@v7.0.1'
+      - uses: 'pnpm/setup@v3.1.1'
         with:
           cache: true
       - run: 'pnpm test'

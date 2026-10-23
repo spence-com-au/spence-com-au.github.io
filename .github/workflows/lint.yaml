@@ -32,8 +32,8 @@ jobs:
           - 'prettier'
           - 'types'
     steps:
-      - uses: 'actions/checkout@v7'
-      - uses: 'pnpm/setup@v3'
+      - uses: 'actions/checkout@v7.0.1'
+      - uses: 'pnpm/setup@v3.1.1'
         with:
           cache: true
       - run: 'pnpm lint:${{ matrix.check }}'
