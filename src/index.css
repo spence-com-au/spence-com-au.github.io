@@ -46,6 +46,7 @@ h1 {
  */
 .card {
   --edge-color: var(--tint, var(--edge));
+  --radius: 1.75rem;
 
   position: relative;
   display: flex;
@@ -53,7 +54,7 @@ h1 {
   gap: 0.375rem;
   padding: 1.25rem 1.25rem 1rem;
   border: 0.25rem solid var(--edge-color);
-  border-radius: 1.75rem;
+  border-radius: var(--radius);
   background: var(--paper);
   box-shadow: 0 0.5rem 0 var(--edge-color);
   transition:
@@ -105,12 +106,16 @@ h2 {
   outline: none;
 }
 
-/* Stretched over the whole card, border included, so a tap anywhere on it opens the site. */
+/**
+ * Stretched over the whole card, border included, so a tap anywhere on it opens the site. The radius comes from the
+ * card's custom property rather than `inherit`, which would read the link's own `0` and leave each corner a square
+ * sliver outside the card that still takes taps.
+ */
 .open::after {
   content: '';
   position: absolute;
   inset: -0.25rem;
-  border-radius: inherit;
+  border-radius: var(--radius);
 }
 
 .nowrap {
