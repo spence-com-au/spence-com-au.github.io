@@ -40,7 +40,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "^17.13.0",
-    "html-validate": "11.16.4",
+    "html-validate": "11.17.0",
     "npm-run-all2": "^9.0.4",
     "prettier": "3.9.10",
     "stylelint": "17.16.0",
