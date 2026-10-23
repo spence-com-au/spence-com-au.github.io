@@ -16,3 +16,9 @@ updates:
     # on any update Dependabot proposes sooner than that.
     cooldown:
       default-days: 1
+
+    # `@types/node` describes one Node major, so it follows `devEngines.runtime.version` in `package.json` rather than
+    # the newest release: a later major types APIs the runtime lacks, and CI passes regardless.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
