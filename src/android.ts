@@ -5,9 +5,14 @@
 // `userAgentData` is Chromium's, and Firefox and Safari carry the platform only in the `User-Agent` string.
 const { userAgentData } = navigator as Navigator & { userAgentData?: { platform: string } };
 
-if (userAgentData?.platform === 'Android' || /\bAndroid\b/.test(navigator.userAgent)) {
-  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-android-href]')) {
-    link.href = link.dataset.androidHref ?? link.href;
-    link.setAttribute('aria-label', link.dataset.androidLabel ?? link.getAttribute('aria-label') ?? '');
+/** Switches the cards on Android. Called here on the built page, and by `src/dev.tsx` once React has rendered them. */
+export function switchToDownloads(): void {
+  if (userAgentData?.platform === 'Android' || /\bAndroid\b/.test(navigator.userAgent)) {
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-android-href]')) {
+      link.href = link.dataset.androidHref ?? link.href;
+      link.setAttribute('aria-label', link.dataset.androidLabel ?? link.getAttribute('aria-label') ?? '');
+    }
   }
 }
+
+switchToDownloads();
