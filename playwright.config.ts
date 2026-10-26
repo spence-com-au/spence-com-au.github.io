@@ -1,11 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const url = 'http://localhost:4173/';
+
 export default defineConfig({
   testDir: 'tests/e2e',
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: 'http://localhost:4173/',
+    baseURL: url,
     trace: 'retain-on-failure',
   },
   projects: [
@@ -15,7 +17,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm build fixtures/repos.json && pnpm preview --port 4173 --strictPort',
-    url: 'http://localhost:4173/',
+    command: `pnpm build fixtures/repos.json && pnpm preview --port ${new URL(url).port} --strictPort`,
+    url,
   },
 });
