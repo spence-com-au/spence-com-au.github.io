@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { build } from 'vite';
 
 import type { Project } from '../src/project.ts';
+import { readFavicon, renderIcon, SITE_ICONS } from './icons.ts';
 
 const SSR_OUT = '.ssr';
 const PLACEHOLDER = '<!--app-->';
@@ -33,3 +34,11 @@ await writeFile(
 
 await rm(SSR_OUT, { recursive: true });
 console.log(`Rendered ${projects.length} repos`);
+
+const favicon = await readFavicon();
+
+for (const icon of SITE_ICONS) {
+  await writeFile(`_site/${icon.file}`, renderIcon(favicon, icon));
+}
+
+console.log(`Rendered ${SITE_ICONS.length} icons`);

@@ -97,6 +97,30 @@ test('ships no script but the one that points Android at its downloads', async (
   await expect(page.locator('script')).toHaveAttribute('type', 'module');
 });
 
+// The PNG icons exist only once the build renders them, so a link to one it missed would 404 without failing anything.
+test('serves every icon the page and its manifest name, at the size they name', async ({ page }) => {
+  const links = await page
+    .locator('link[rel~="icon"], link[rel="apple-touch-icon"]')
+    .evaluateAll((els) => els.map((el) => ({ src: el.getAttribute('href'), sizes: el.getAttribute('sizes') })));
+
+  const manifest = await page.request.get((await page.locator('link[rel="manifest"]').getAttribute('href')) ?? '');
+  const { icons } = (await manifest.json()) as { icons: { src: string; sizes: string }[] };
+
+  for (const { src, sizes } of [...links, ...icons]) {
+    const response = await page.request.get(src ?? '');
+
+    // By type rather than status, since the preview server answers a path it lacks with the page and a 200.
+    expect(response.headers()['content-type'], src ?? '').toMatch(/^image\//);
+
+    if (sizes) {
+      // A PNG's width and height are the two 32-bit integers at the start of its `IHDR` chunk.
+      const png = await response.body();
+
+      expect(`${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`, src ?? '').toBe(sizes);
+    }
+  }
+});
+
 test.describe('with scripts on', () => {
   test.use({ javaScriptEnabled: true });
 
