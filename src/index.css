@@ -123,13 +123,16 @@ h1 {
   border-radius: 0.75rem;
 }
 
-/* A card without an icon shows its initial with the cursor after it, as in the logo. */
+/**
+ * A card without an icon shows its initial with the cursor after it, as in the logo. Drawn in the page's background,
+ * which `tint` holds the edge to 3:1 against, where the card's own surface may fall short of it.
+ */
 span.tile {
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--edge-color);
-  color: var(--surface);
+  color: var(--background);
   font-size: 3rem;
   font-weight: 800;
   line-height: 1;
@@ -144,7 +147,7 @@ span.tile::after {
 
 /* A site's own colour can be as orange as the cursor, so there it takes the initial's colour instead. */
 .card[data-tinted] span.tile::after {
-  background: var(--surface);
+  background: var(--background);
 }
 
 h2 {

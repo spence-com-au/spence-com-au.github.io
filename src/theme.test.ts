@@ -9,7 +9,7 @@ describe.each(Object.entries(BACKGROUNDS))('tint against the %s background', (sc
     expect(tint('rgb(63 155 79)', background)).toBe('rgb(63 155 79)');
   });
 
-  it.each(scheme === 'light' ? ['#f28c28', '#ffffff'] : ['#3b1f8f', '#000000'])(
+  it.each(scheme === 'light' ? ['#f28c28', '#ffffff'] : ['#3b1f8f', '#4a1c1c'])(
     `${scheme === 'light' ? 'darkens' : 'lightens'} %s just far enough to stand out, keeping its hue`,
     (themeColor) => {
       const shade = tint(themeColor, background) ?? '';
