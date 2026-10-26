@@ -21,6 +21,16 @@ describe.each(Object.entries(BACKGROUNDS))('tint against the %s background', (sc
     },
   );
 
+  it.each(['rgb(63 155 79 / 0.2)', '#3f9b4f33', 'transparent'])(
+    'paints %s opaque, as a browser draws the manifest `theme_color`',
+    (themeColor) => {
+      const shade = tint(themeColor, background) ?? '';
+
+      expect(oklch(shade)?.alpha).toBeUndefined();
+      expect(wcagContrast(shade, background)).toBeGreaterThanOrEqual(3);
+    },
+  );
+
   it.each([
     ['not a colour', 'nonsense'],
     ['missing', null],
