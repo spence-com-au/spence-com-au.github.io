@@ -4,9 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { BACKGROUNDS, tint } from './theme.ts';
 
 describe.each(Object.entries(BACKGROUNDS))('tint against the %s background', (scheme, background) => {
-  it('keeps a theme colour that stands out against the background, as its site wrote it', () => {
+  it('keeps a theme colour that stands out against the background, as CSS hex', () => {
     expect(tint('#3f9b4f', background)).toBe('#3f9b4f');
-    expect(tint('rgb(63 155 79)', background)).toBe('rgb(63 155 79)');
+    expect(tint('rgb(63 155 79)', background)).toBe('#3f9b4f');
+    expect(tint('3f9b4f', background)).toBe('#3f9b4f');
   });
 
   it.each(scheme === 'light' ? ['#f28c28', '#ffffff'] : ['#3b1f8f', '#4a1c1c'])(
