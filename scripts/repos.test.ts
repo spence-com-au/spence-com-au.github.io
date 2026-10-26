@@ -152,12 +152,17 @@ describe('listProjects', () => {
     ['omits', '', undefined],
   ])('%s the GitHub token when GITHUB_TOKEN is %j', async (_, token, authorization) => {
     vi.stubEnv('GITHUB_TOKEN', token);
-    routes = repos(1, []);
+    routes = { ...repos(1, [repo('car-racer')]), ...releases('car-racer') };
 
     await listProjects(DOMAIN);
 
-    const init = vi.mocked(fetch).mock.calls[0]?.[1] as { headers: Record<string, string> };
-    expect(init.headers.Authorization).toBe(authorization);
+    // Every route, since the repo listing and the releases listing each build their own headers.
+    const calls = vi.mocked(fetch).mock.calls;
+    expect(calls.map(([url]) => String(url))).toEqual(Object.keys(routes));
+
+    for (const [, init] of calls) {
+      expect((init as { headers: Record<string, string> }).headers.Authorization).toBe(authorization);
+    }
   });
 
   it('falls back to the manifest name, and to the widest bitmap that is not only maskable', async () => {
