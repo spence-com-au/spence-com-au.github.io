@@ -147,6 +147,17 @@ describe('listProjects', () => {
     expect(await listProjects(DOMAIN)).toMatchObject([{ icon: `https://${DOMAIN}/dino-park/icon` }]);
   });
 
+  it("resolves an icon against the manifest's URL rather than the site's", async () => {
+    routes = {
+      ...repos(1, [repo('dino-park', { has_pages: true })]),
+      ...page('dino-park', '<link rel="manifest" href="assets/manifest.webmanifest">'),
+      [`https://${DOMAIN}/dino-park/assets/manifest.webmanifest`]: () =>
+        Response.json({ icons: [{ src: 'icon.svg', sizes: 'any' }] }),
+    };
+
+    expect(await listProjects(DOMAIN)).toMatchObject([{ icon: `https://${DOMAIN}/dino-park/assets/icon.svg` }]);
+  });
+
   it.each([
     ['sends', 'secret', 'Bearer secret'],
     ['omits', '', undefined],
