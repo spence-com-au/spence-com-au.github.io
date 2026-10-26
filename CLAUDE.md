@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 - **Open a pull request; `master` is protected.** A direct push is rejected rather than queued, so branch, push the
-  branch, and open the PR with `gh pr create`. What the protection requires is deliberately not restated here, read it
+  branch and open the PR with `gh pr create`. What the protection requires is deliberately not restated here, read it
   from `gh api repos/{owner}/{repo}/branches/master/protection` and `gh api repos/{owner}/{repo}/rulesets`, either of
   which may be the one in force. The approval comes from Claude, which the organization's `Common workflows` ruleset
   runs on a pull request into `master` — nobody here can approve their own. So open it ready for review rather than as a
@@ -18,7 +18,7 @@
   https://spence.com.au, which serves it. Show each state the change adds, and at phone width where the layout differs
   there. A bug fix shows the page before and after, the broken state beside the fixed one, so a reviewer sees both what
   was wrong and that it no longer is. GitHub takes an image upload only through its web editor, so commit the images to
-  the branch, embed them in the PR body by that commit's SHA (`…/blob/<sha>/<path>?raw=true`), and remove them in the
+  the branch, embed them in the PR body by that commit's SHA (`…/blob/<sha>/<path>?raw=true`) and remove them in the
   next commit: the pinned links keep working, and the squash merge carries neither commit into `master`. The body rather
   than a comment, because the body is what a reviewer reads first and the one place that can always show the current
   state: when a later push changes what the page draws, take the screenshots again and replace them there, rather than
