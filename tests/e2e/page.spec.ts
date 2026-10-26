@@ -171,6 +171,59 @@ test.describe('with scripts on', () => {
       await button.click();
       await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
     });
+
+    test('follows the system scheme until one is chosen, then ignores it', async ({ page }) => {
+      const button = page.getByRole('button', { name: 'Dark scheme' });
+
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await page.emulateMedia({ colorScheme: 'light' });
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await page.emulateMedia({ colorScheme: 'light' });
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute(
+        'content',
+        formatRgb(BACKGROUNDS.dark) ?? '',
+      );
+    });
+
+    // A `localStorage` that throws on any access, as in some private windows or with site data blocked.
+    test.describe('with storage unavailable', () => {
+      const errors: Error[] = [];
+
+      test.beforeEach(async ({ page }) => {
+        errors.length = 0;
+        page.on('pageerror', (error) => errors.push(error));
+
+        await page.addInitScript(() => {
+          Storage.prototype.getItem = Storage.prototype.setItem = () => {
+            throw new DOMException('Denied', 'SecurityError');
+          };
+        });
+        await page.reload();
+      });
+
+      // Uncaught, the inline script's error would end only that script and leave the module scripts to carry on, so
+      // the page's behaviour cannot show that the error was caught; the error itself does.
+      test('switches the scheme for the visit and follows the system on the next', async ({ page }) => {
+        const button = page.getByRole('button', { name: 'Dark scheme' });
+
+        await expect(button).toHaveAttribute('aria-pressed', 'false');
+        await button.click();
+        await expect(button).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.dark) ?? '');
+
+        await page.reload();
+        await expect(button).toHaveAttribute('aria-pressed', 'false');
+        await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
+
+        expect(errors).toEqual([]);
+      });
+    });
   });
 
   test.describe('in the dark colour scheme', () => {
