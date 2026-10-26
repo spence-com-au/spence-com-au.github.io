@@ -3,6 +3,7 @@
 import { readFile, rm, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
+import { Resvg } from '@resvg/resvg-js';
 import { build } from 'vite';
 
 import type { Project } from '../src/project.ts';
@@ -33,3 +34,27 @@ await writeFile(
 
 await rm(SSR_OUT, { recursive: true });
 console.log(`Rendered ${projects.length} repos`);
+
+// Every PNG icon is the SVG favicon drawn at another size, so they are rendered from it rather than kept beside it.
+const favicon = await readFile('public/favicon.svg', 'utf8');
+const plate = /<rect [^>]*fill="(#[0-9a-f]+)"/.exec(favicon)?.[1];
+
+if (!plate) {
+  throw new Error('favicon.svg has no plate for the full-bleed icons to fill their corners with');
+}
+
+// A full-bleed icon fills the corners the favicon leaves transparent, since iOS paints them black.
+const icons = [
+  { file: 'favicon-16.png', size: 16 },
+  { file: 'favicon-32.png', size: 32 },
+  { file: 'apple-touch-icon.png', size: 180, fullBleed: true },
+  { file: 'icon-512.png', size: 512 },
+];
+
+for (const { file, size, fullBleed } of icons) {
+  const png = new Resvg(favicon, { fitTo: { mode: 'width', value: size }, background: fullBleed ? plate : undefined });
+
+  await writeFile(`_site/${file}`, png.render().asPng());
+}
+
+console.log(`Rendered ${icons.length} icons`);
