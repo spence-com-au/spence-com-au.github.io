@@ -1,4 +1,5 @@
 import globals from 'globals';
+import { includeIgnoreFile } from 'eslint/config';
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier/flat';
 import reactHooks from 'eslint-plugin-react-hooks';
@@ -6,9 +7,7 @@ import stylistic from '@stylistic/eslint-plugin';
 import tseslint from 'typescript-eslint';
 
 export default [
-  {
-    ignores: ['.claude/worktrees/**', 'playwright-report/**', '_site/**', '.ssr/**', 'test-results/**'],
-  },
+  includeIgnoreFile(`${import.meta.dirname}/.gitignore`),
 
   js.configs.recommended,
   ...tseslint.configs.strict,
