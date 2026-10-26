@@ -33,7 +33,7 @@ jobs:
           - 'types'
     steps:
       - uses: 'actions/checkout@v7.0.1'
-      - uses: 'pnpm/setup@v3.1.1'
+      - uses: 'pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4' # v3.1.1
         with:
           cache: true
       - run: 'pnpm lint:${{ matrix.check }}'
