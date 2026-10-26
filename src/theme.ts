@@ -1,6 +1,9 @@
 import { clampChroma, formatHex, oklch, wcagContrast } from 'culori';
 
-/** The page's background in each colour scheme, which `index.css` paints and the end-to-end test holds it to. */
+/**
+ * The page's background in each colour scheme, which the end-to-end test holds `index.css`, the `theme-color` metas in
+ * `index.html`, the manifest and the favicon's plate and letter to.
+ */
 export const BACKGROUNDS = { light: '#f4efe6', dark: '#1d1b19' };
 
 /**

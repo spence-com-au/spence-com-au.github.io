@@ -1,5 +1,6 @@
 import { devices, expect, test, type Page } from '@playwright/test';
 import { formatRgb } from 'culori';
+import { parse } from 'node-html-parser';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
 import { BACKGROUNDS, tint } from '../../src/theme.ts';
@@ -102,8 +103,30 @@ for (const [colorScheme, background] of Object.entries(BACKGROUNDS) as ['light' 
     test('paints the background the tints are checked against', async ({ page }) => {
       await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(background) ?? '');
     });
+
+    test("gives the browser's toolbar the background before a scheme is chosen", async ({ page }) => {
+      const meta = page.locator(`meta[name="theme-color"][media="(prefers-color-scheme: ${colorScheme})"]`);
+
+      await expect(meta).toHaveAttribute('content', background);
+    });
   });
 }
+
+// A manifest names one colour of each, so an installed app opens on the light scheme's background.
+test('gives an installed app the light background', async ({ page }) => {
+  const manifest = await page.request.get((await page.locator('link[rel="manifest"]').getAttribute('href')) ?? '');
+
+  expect(await manifest.json()).toMatchObject({ background_color: BACKGROUNDS.light, theme_color: BACKGROUNDS.light });
+});
+
+// The mark is the same in either scheme: the light background's colour lettered on a plate of the dark one's.
+test('draws the favicon in the two backgrounds', async ({ page }) => {
+  const href = (await page.locator('link[rel="icon"][type="image/svg+xml"]').getAttribute('href')) ?? '';
+  const favicon = parse(await (await page.request.get(href)).text());
+
+  expect(favicon.querySelector('rect')?.getAttribute('fill')).toBe(BACKGROUNDS.dark);
+  expect(favicon.querySelector('path')?.getAttribute('fill')).toBe(BACKGROUNDS.light);
+});
 
 test('opens a site from anywhere on its card, but its source from the source link', async ({ page }) => {
   const project = find('with a site and a description', (p): p is Project & { site: string; description: string } =>
