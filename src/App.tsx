@@ -111,7 +111,7 @@ export default function App({ projects }: { projects: Project[] }) {
     <main>
       <h1>spence.com.au</h1>
       <ul className="cards">
-        {/* By the title a card shows rather than the repo's name, which a manifest's own name can start differently. */}
+        {/* By the title a card shows, not its repo's name: a manifest's `short_name` can start with a different letter. */}
         {projects
           .toSorted((a, b) => a.title.localeCompare(b.title, 'en'))
           .map((project) => (
