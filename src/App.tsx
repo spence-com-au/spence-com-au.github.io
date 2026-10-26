@@ -109,7 +109,16 @@ function Card({ project }: { project: Project }) {
 export default function App({ projects }: { projects: Project[] }) {
   return (
     <main>
-      <h1>spence.com.au</h1>
+      <h1>
+        <span className="visually-hidden">spence.com.au</span>
+        <span className="wordmark" aria-hidden="true">
+          SPENCE
+          <span className="cursor" />
+        </span>
+        <span className="domain" aria-hidden="true">
+          ~/SPENCE.COM.AU
+        </span>
+      </h1>
       <ul className="cards">
         {projects.map((project) => (
           <Card key={project.repo} project={project} />
