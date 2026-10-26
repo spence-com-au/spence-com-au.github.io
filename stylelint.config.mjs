@@ -1,6 +1,16 @@
+import { includeIgnoreFile } from 'eslint/config';
+
+// The config can't point stylelint at an ignore file, so it takes `.gitignore`'s patterns as ESLint parses them. Any of
+// them may name a directory, with a trailing slash or without one, so each also ignores everything under its path.
+const { ignores } = includeIgnoreFile(`${import.meta.dirname}/.gitignore`);
+
 export default {
   extends: ['stylelint-config-standard'],
-  ignoreFiles: ['_site/**'],
+  ignoreFiles: ignores.flatMap((pattern) => {
+    const path = pattern.replace(/\/$/, '');
+
+    return [path, `${path}/**`];
+  }),
   reportNeedlessDisables: true,
   rules: {
     /**
