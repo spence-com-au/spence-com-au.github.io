@@ -234,6 +234,17 @@ describe('listProjects', () => {
       },
       `Fetching https://${DOMAIN}/dino-park/manifest.json failed: not JSON`,
     ],
+    [
+      'the connection drops while it reads the manifest',
+      {
+        ...page('dino-park', '<link rel="manifest" href="/dino-park/manifest.json">'),
+
+        // As undici rejects a body cut off mid-read, which is no parse failure and so not reported as one.
+        [`https://${DOMAIN}/dino-park/manifest.json`]: () =>
+          new Response(new ReadableStream({ pull: (controller) => controller.error(new TypeError('terminated')) })),
+      },
+      'terminated',
+    ],
   ])('fails rather than strip a card when %s', async (_, sitePage, message) => {
     routes = { ...repos(1, [repo('dino-park', { has_pages: true })]), ...sitePage };
 
