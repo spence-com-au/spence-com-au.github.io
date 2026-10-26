@@ -17,7 +17,7 @@ export default [
     plugins: { '@stylistic': stylistic },
     rules: {
       'curly': ['error', 'all'],
-      'padding-line-between-statements': [
+      '@stylistic/padding-line-between-statements': [
         'error',
         { blankLine: 'always', prev: '*', next: 'multiline-block-like' },
         { blankLine: 'always', prev: 'multiline-block-like', next: '*' },
