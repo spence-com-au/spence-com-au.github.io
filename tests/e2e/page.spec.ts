@@ -92,6 +92,15 @@ test('paints the background the tints are checked against', async ({ page }) => 
   await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUND) ?? '');
 });
 
+// A preload whose path Vite failed to resolve would 404 and quietly bring back the swap from the fallback font.
+test('preloads the font the stylesheet draws the page in', async ({ page }) => {
+  const font = (await page.locator('link[rel="preload"][as="font"]').getAttribute('href')) ?? '';
+  const stylesheet = (await page.locator('link[rel="stylesheet"]').getAttribute('href')) ?? '';
+
+  expect((await page.request.get(font)).headers()['content-type']).toBe('font/woff2');
+  expect(await (await page.request.get(stylesheet)).text()).toContain(font);
+});
+
 test('ships no script but the one that points Android at its downloads', async ({ page }) => {
   await expect(page.locator('script')).toHaveCount(1);
   await expect(page.locator('script')).toHaveAttribute('type', 'module');
