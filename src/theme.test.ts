@@ -22,6 +22,14 @@ describe.each(Object.entries(BACKGROUNDS))('tint against the %s background', (sc
     },
   );
 
+  // Each passes 3:1 as written, and fails it once `formatHex` clips it into sRGB.
+  it.each(scheme === 'light' ? ['oklch(0.55 0.3 180)'] : ['oklch(0.6 0.35 270)'])(
+    'keeps %s, which sRGB cannot hold, standing out as the hex it returns',
+    (themeColor) => {
+      expect(wcagContrast(tint(themeColor, background) ?? '', background)).toBeGreaterThanOrEqual(3);
+    },
+  );
+
   it.each([
     ['not a colour', 'nonsense'],
     ['missing', null],
