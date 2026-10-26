@@ -19,7 +19,16 @@
       crossorigin
     />
     <link rel="stylesheet" href="/src/index.css" />
+    <script>
+      // Inline and blocking, so a scheme chosen on an earlier visit paints from the first frame rather than after the
+      // system's. Storage can be unavailable, as in some private windows, and then the page follows the system.
+      try {
+        const scheme = localStorage.getItem('scheme');
+        if (scheme) document.documentElement.dataset.scheme = scheme;
+      } catch {}
+    </script>
     <script type="module" src="/src/android.ts"></script>
+    <script type="module" src="/src/scheme.ts"></script>
   </head>
   <body>
     <div id="root"><!--app--></div>

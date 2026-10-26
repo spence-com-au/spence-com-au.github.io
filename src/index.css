@@ -16,6 +16,14 @@
   --edge: var(--text);
 }
 
+:root[data-scheme='light'] {
+  color-scheme: light;
+}
+
+:root[data-scheme='dark'] {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
   background: var(--background);
@@ -29,15 +37,62 @@ main {
   padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem) 4rem;
 }
 
+header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: clamp(2rem, 5vw, 3rem);
+}
+
 /* The logo: the name in capitals, then a block cursor filling the next character cell. */
 h1 {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  margin: 0 0 clamp(2rem, 5vw, 3rem);
+  margin: 0;
   font-size: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
   font-weight: 800;
   line-height: 1;
+}
+
+/* A toy block like the cards, sinking onto its edge when pressed. */
+.scheme {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0.1875rem solid var(--edge);
+  border-radius: 0.625rem;
+  background: var(--surface);
+  box-shadow: 0 0.25rem 0 var(--edge);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    translate 80ms ease-out,
+    box-shadow 80ms ease-out;
+}
+
+/* `display` would otherwise override the attribute and show a button no script will answer. */
+.scheme[hidden] {
+  display: none;
+}
+
+.scheme:active {
+  translate: 0 0.1875rem;
+  box-shadow: 0 0.0625rem 0 var(--edge);
+}
+
+.scheme:focus-visible {
+  outline: 0.1875rem solid var(--text);
+  outline-offset: 0.25rem;
+}
+
+.scheme svg {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 /* Read in place of the logo, whose capitals a screen reader may spell out letter by letter. */
@@ -283,7 +338,8 @@ h2 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card {
+  .card,
+  .scheme {
     transition: none;
   }
 

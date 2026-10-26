@@ -112,9 +112,16 @@ test('preloads the font the stylesheet draws the page in', async ({ page }) => {
   expect(await (await page.request.get(stylesheet)).text()).toContain(font);
 });
 
-test('ships no script but the one that points Android at its downloads', async ({ page }) => {
-  await expect(page.locator('script')).toHaveCount(1);
-  await expect(page.locator('script')).toHaveAttribute('type', 'module');
+// React rendered the page at build time, so what ships is the inline restore of a chosen scheme and one module, which
+// Vite bundles from the scheme switch and the script that points Android at its downloads.
+test('ships no script but the scheme switch and the one that points Android at its downloads', async ({ page }) => {
+  await expect(page.locator('script')).toHaveCount(2);
+  await expect(page.locator('script:not([src])')).toHaveCount(1);
+  await expect(page.locator('script[type="module"][src]')).toHaveCount(1);
+});
+
+test('hides the scheme switch from a browser running no script, which it could not answer', async ({ page }) => {
+  await expect(page.getByRole('button', { name: 'Dark theme', includeHidden: true })).toBeHidden();
 });
 
 // The PNG icons exist only once the build renders them, so a link to one it missed would 404 without failing anything.
@@ -143,6 +150,36 @@ test('serves every icon the page and its manifest name, at the size they name', 
 
 test.describe('with scripts on', () => {
   test.use({ javaScriptEnabled: true });
+
+  test.describe('in the light colour scheme', () => {
+    test.use({ colorScheme: 'light' });
+
+    test('switches to the dark scheme and remembers it', async ({ page }) => {
+      const button = page.getByRole('button', { name: 'Dark theme' });
+      const dark = formatRgb(BACKGROUNDS.dark) ?? '';
+
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('body')).toHaveCSS('background-color', dark);
+      await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', dark);
+
+      await page.reload();
+      await expect(page.locator('body')).toHaveCSS('background-color', dark);
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+
+      await button.click();
+      await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
+    });
+  });
+
+  test.describe('in the dark colour scheme', () => {
+    test.use({ colorScheme: 'dark' });
+
+    test('shows the dark scheme as the one in force', async ({ page }) => {
+      await expect(page.getByRole('button', { name: 'Dark theme' })).toHaveAttribute('aria-pressed', 'true');
+    });
+  });
 
   const project = projects.find((p) => p.apk);
   const open = (page: import('@playwright/test').Page) =>

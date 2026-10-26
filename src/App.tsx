@@ -18,6 +18,12 @@ const ANDROID = {
   path: 'M16.61 15.15C16.15 15.15 15.77 14.78 15.77 14.32S16.15 13.5 16.61 13.5H16.61C17.07 13.5 17.45 13.86 17.45 14.32C17.45 14.78 17.07 15.15 16.61 15.15M7.41 15.15C6.95 15.15 6.57 14.78 6.57 14.32C6.57 13.86 6.95 13.5 7.41 13.5H7.41C7.87 13.5 8.24 13.86 8.24 14.32C8.24 14.78 7.87 15.15 7.41 15.15M16.91 10.14L18.58 7.26C18.67 7.09 18.61 6.88 18.45 6.79C18.28 6.69 18.07 6.75 18 6.92L16.29 9.83C14.95 9.22 13.5 8.9 12 8.91C10.47 8.91 9 9.24 7.73 9.82L6.04 6.91C5.95 6.74 5.74 6.68 5.57 6.78C5.4 6.87 5.35 7.08 5.44 7.25L7.1 10.13C4.25 11.69 2.29 14.58 2 18H22C21.72 14.59 19.77 11.7 16.91 10.14H16.91Z',
 };
 
+/** Half sun, half moon, from [Material Design Icons](https://pictogrammers.com/library/mdi/icon/theme-light-dark/). */
+const THEME = {
+  viewBox: '0 0 24 24',
+  path: 'M7.5,2C5.71,3.15 4.5,5.18 4.5,7.5C4.5,9.82 5.71,11.85 7.53,13C4.46,13 2,10.54 2,7.5A5.5,5.5 0 0,1 7.5,2M19.07,3.5L20.5,4.93L4.93,20.5L3.5,19.07L19.07,3.5M12.89,5.93L11.41,5L9.97,6L10.39,4.3L9,3.24L10.75,3.12L11.33,1.47L12,3.1L13.73,3.13L12.38,4.26L12.89,5.93M9.59,9.54L8.43,8.81L7.31,9.59L7.65,8.27L6.56,7.44L7.92,7.35L8.37,6.06L8.88,7.33L10.24,7.36L9.19,8.23L9.59,9.54M19,13.5A5.5,5.5 0 0,1 13.5,19C12.28,19 11.15,18.6 10.24,17.93L17.93,10.24C18.6,11.15 19,12.28 19,13.5M14.6,20.08L17.37,18.93L17.13,22.28L14.6,20.08M18.93,17.38L20.08,14.61L22.28,17.15L18.93,17.38M20.08,12.42L18.94,9.64L22.28,9.88L20.08,12.42M9.63,18.93L12.4,20.08L9.87,22.27L9.63,18.93Z',
+};
+
 /** Hidden from assistive technology, so the link around a mark says where it goes in its own label. */
 function Mark({ icon }: { icon: typeof GITHUB }) {
   return (
@@ -115,16 +121,23 @@ export default function App({ projects }: { projects: Project[] }) {
 
   return (
     <main>
-      <h1>
-        <span className="visually-hidden">spence.com.au</span>
-        <span className="wordmark" aria-hidden="true">
-          SPENCE
-          <span className="cursor" />
-        </span>
-        <span className="domain" aria-hidden="true">
-          ~/SPENCE.COM.AU
-        </span>
-      </h1>
+      <header>
+        <h1>
+          <span className="visually-hidden">spence.com.au</span>
+          <span className="wordmark" aria-hidden="true">
+            SPENCE
+            <span className="cursor" />
+          </span>
+          <span className="domain" aria-hidden="true">
+            ~/SPENCE.COM.AU
+          </span>
+        </h1>
+
+        {/* Hidden until `src/scheme.ts` runs, since without a script it can switch nothing. */}
+        <button className="scheme" type="button" aria-label="Dark theme" aria-pressed="false" hidden>
+          <Mark icon={THEME} />
+        </button>
+      </header>
       <ul className="cards">
         {sorted.map((project) => (
           <Card key={project.repo} project={project} />
