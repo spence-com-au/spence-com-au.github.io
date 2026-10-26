@@ -50,7 +50,7 @@ export async function readFavicon() {
  * Draws the favicon inside a 32-unit frame of its own, which a nested `<svg>` fills whatever the favicon's `viewBox`,
  * so that the plate and the inset need no edit to the favicon's markup.
  */
-export function renderIcon({ favicon, plate }: Awaited<ReturnType<typeof readFavicon>>, icon: Icon) {
+export function drawIcon({ favicon, plate }: Awaited<ReturnType<typeof readFavicon>>, icon: Icon) {
   const scale = icon.inset ? INSET_SCALE : 1;
   const art = `<g transform="translate(16 16) scale(${scale}) translate(-16 -16)">${favicon}</g>`;
   const fill = icon.plate ? `<rect width="32" height="32" fill="${plate}"/>` : '';
@@ -58,5 +58,9 @@ export function renderIcon({ favicon, plate }: Awaited<ReturnType<typeof readFav
   const body = `${clip}<g${clip && ' clip-path="url(#plate)"'}>${fill}${art}</g>`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${body}</svg>`;
 
-  return new Resvg(svg, { fitTo: { mode: 'width', value: icon.size } }).render().asPng();
+  return new Resvg(svg, { fitTo: { mode: 'width', value: icon.size } }).render();
+}
+
+export function renderIcon(...args: Parameters<typeof drawIcon>) {
+  return drawIcon(...args).asPng();
 }
