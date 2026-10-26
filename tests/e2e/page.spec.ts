@@ -177,18 +177,20 @@ test.describe('with scripts on', () => {
 
       await page.emulateMedia({ colorScheme: 'dark' });
       await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await page.emulateMedia({ colorScheme: 'light' });
+
+      // Chosen against the system, so a listener that went on following it would turn the page dark again below.
+      await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'false');
 
-      await button.click();
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await page.emulateMedia({ colorScheme: 'dark' });
       await page.emulateMedia({ colorScheme: 'light' });
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute(
-        'content',
-        formatRgb(BACKGROUNDS.dark) ?? '',
-      );
+      await page.emulateMedia({ colorScheme: 'dark' });
+
+      // The change event is dispatched as the next frame renders, so wait until two have passed after the page sees it.
+      await page.waitForFunction(() => matchMedia('(prefers-color-scheme: dark)').matches);
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
     });
 
     // A `localStorage` that throws on any access, as in some private windows or with site data blocked.
@@ -200,9 +202,11 @@ test.describe('with scripts on', () => {
         page.on('pageerror', (error) => errors.push(error));
 
         await page.addInitScript(() => {
-          Storage.prototype.getItem = Storage.prototype.setItem = () => {
-            throw new DOMException('Denied', 'SecurityError');
-          };
+          Object.defineProperty(window, 'localStorage', {
+            get() {
+              throw new DOMException('Denied', 'SecurityError');
+            },
+          });
         });
         await page.reload();
       });
@@ -220,6 +224,9 @@ test.describe('with scripts on', () => {
         await page.reload();
         await expect(button).toHaveAttribute('aria-pressed', 'false');
         await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await expect(button).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.dark) ?? '');
 
         expect(errors).toEqual([]);
       });
