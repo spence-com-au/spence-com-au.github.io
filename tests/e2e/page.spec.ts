@@ -1,4 +1,4 @@
-import { devices, expect, test } from '@playwright/test';
+import { devices, expect, test, type Page } from '@playwright/test';
 import { formatRgb } from 'culori';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
@@ -148,6 +148,17 @@ test('serves every icon the page and its manifest name, at the size they name', 
   }
 });
 
+// The page sends the system scheme's `change` event as it renders a frame, so wait until two have passed after it sees
+// the new scheme: two changes back to back could otherwise end where they began and send none.
+async function emulateSystemScheme(page: Page, colorScheme: 'light' | 'dark'): Promise<void> {
+  await page.emulateMedia({ colorScheme });
+  await page.waitForFunction(
+    (dark) => matchMedia('(prefers-color-scheme: dark)').matches === dark,
+    colorScheme === 'dark',
+  );
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+
 test.describe('with scripts on', () => {
   test.use({ javaScriptEnabled: true });
 
@@ -182,12 +193,8 @@ test.describe('with scripts on', () => {
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'false');
 
-      await page.emulateMedia({ colorScheme: 'light' });
-      await page.emulateMedia({ colorScheme: 'dark' });
-
-      // The change event is dispatched as the next frame renders, so wait until two have passed after the page sees it.
-      await page.waitForFunction(() => matchMedia('(prefers-color-scheme: dark)').matches);
-      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await emulateSystemScheme(page, 'light');
+      await emulateSystemScheme(page, 'dark');
 
       await expect(button).toHaveAttribute('aria-pressed', 'false');
       await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
