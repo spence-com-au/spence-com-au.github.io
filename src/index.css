@@ -121,7 +121,7 @@ h1 {
   border-radius: 0.75rem;
 }
 
-/* A card without an icon shows its initial at a prompt, the cursor after it as in the logo. */
+/* A card without an icon shows its initial with the cursor after it, as in the logo. */
 span.tile {
   display: flex;
   align-items: center;
