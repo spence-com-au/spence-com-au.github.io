@@ -9,7 +9,8 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#f4efe6" />
+    <meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1d1b19" media="(prefers-color-scheme: dark)" />
     <link
       rel="preload"
       href="/node_modules/@fontsource-variable/martian-mono/files/martian-mono-latin-wght-normal.woff2"
@@ -18,7 +19,16 @@
       crossorigin
     />
     <link rel="stylesheet" href="/src/index.css" />
+    <script>
+      // Inline and blocking, so a scheme chosen on an earlier visit paints from the first frame rather than after the
+      // system's. Storage can be unavailable, as in some private windows, and then the page follows the system.
+      try {
+        const scheme = localStorage.getItem('scheme');
+        if (scheme) document.documentElement.dataset.scheme = scheme;
+      } catch {}
+    </script>
     <script type="module" src="/src/android.ts"></script>
+    <script type="module" src="/src/scheme.ts"></script>
   </head>
   <body>
     <div id="root"><!--app--></div>

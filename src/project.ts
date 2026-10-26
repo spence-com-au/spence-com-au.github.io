@@ -16,6 +16,7 @@ export interface Project {
   repo: string;
   icon: string | null;
 
-  /** The site manifest's `theme_color` as written there, which `tint` darkens where it would not show. */
+  /** The site manifest's `theme_color` as written there, which `tint` darkens or lightens where it would not
+   * show against the background. */
   themeColor: string | null;
 }

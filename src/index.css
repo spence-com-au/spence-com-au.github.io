@@ -1,23 +1,33 @@
 @import url('@fontsource-variable/martian-mono');
 
 :root {
-  /* `BACKGROUND` in `src/theme.ts`, which checks each card's tint against it. */
-  --cream: #f4efe6;
-  --paper: #fffbf4;
-  --ink: #1d1b19;
+  color-scheme: light dark;
+
+  /* `BACKGROUNDS` in `src/theme.ts`, which checks each card's tint against it. */
+  --background: light-dark(#f4efe6, #1d1b19);
+  --surface: light-dark(#fffbf4, #2a2724);
+  --text: light-dark(#1d1b19, #f4efe6);
 
   /* The logo's cursor. Too light for text on cream, so it only ever fills shapes. */
   --signal: #ff5a36;
-  --muted: #6b6258;
+  --muted: light-dark(#6b6258, #a39a8f);
 
-  /* The edge of a card whose site has no theme colour for `tint` to darken. */
-  --edge: #1d1b19;
+  /* The edge of a card whose site has no theme colour for `tint` to darken or lighten. */
+  --edge: var(--text);
+}
+
+:root[data-scheme='light'] {
+  color-scheme: light;
+}
+
+:root[data-scheme='dark'] {
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
-  background: var(--cream);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--text);
   font-family: 'Martian Mono Variable', ui-monospace, monospace;
 }
 
@@ -27,15 +37,62 @@ main {
   padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem) 4rem;
 }
 
+header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: clamp(2rem, 5vw, 3rem);
+}
+
 /* The logo: the name in capitals, then a block cursor filling the next character cell. */
 h1 {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  margin: 0 0 clamp(2rem, 5vw, 3rem);
+  margin: 0;
   font-size: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
   font-weight: 800;
   line-height: 1;
+}
+
+/* A toy block like the cards, sinking onto its edge when pressed. */
+.scheme {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0.1875rem solid var(--edge);
+  border-radius: 0.625rem;
+  background: var(--surface);
+  box-shadow: 0 0.25rem 0 var(--edge);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    translate 80ms ease-out,
+    box-shadow 80ms ease-out;
+}
+
+/* `display` would otherwise override the attribute and show a button no script will answer. */
+.scheme[hidden] {
+  display: none;
+}
+
+.scheme:active {
+  translate: 0 0.1875rem;
+  box-shadow: 0 0.0625rem 0 var(--edge);
+}
+
+.scheme:focus-visible {
+  outline: 0.1875rem solid var(--text);
+  outline-offset: 0.25rem;
+}
+
+.scheme svg {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 /* Read in place of the logo, whose capitals a screen reader may spell out letter by letter. */
@@ -97,7 +154,7 @@ h1 {
   padding: 1.25rem 1.25rem 1rem;
   border: 0.25rem solid var(--edge-color);
   border-radius: var(--radius);
-  background: var(--paper);
+  background: var(--surface);
   box-shadow: 0 0.5rem 0 var(--edge-color);
   transition:
     translate 80ms ease-out,
@@ -110,7 +167,7 @@ h1 {
 }
 
 .card:has(.open:focus-visible) {
-  outline: 0.25rem solid var(--ink);
+  outline: 0.25rem solid var(--text);
   outline-offset: 0.375rem;
 }
 
@@ -121,13 +178,16 @@ h1 {
   border-radius: 0.75rem;
 }
 
-/* A card without an icon shows its initial with the cursor after it, as in the logo. */
+/**
+ * A card without an icon shows its initial with the cursor after it, as in the logo. Drawn in the page's background,
+ * which `tint` holds the edge to 3:1 against, where the card's own surface may fall short of it.
+ */
 span.tile {
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--edge-color);
-  color: var(--paper);
+  color: var(--background);
   font-size: 3rem;
   font-weight: 800;
   line-height: 1;
@@ -142,7 +202,7 @@ span.tile::after {
 
 /* A site's own colour can be as orange as the cursor, so there it takes the initial's colour instead. */
 .card[data-tinted] span.tile::after {
-  background: var(--paper);
+  background: var(--background);
 }
 
 h2 {
@@ -214,12 +274,12 @@ h2 {
 }
 
 .source:hover {
-  background: var(--cream);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--text);
 }
 
 .source:focus-visible {
-  outline: 0.1875rem solid var(--ink);
+  outline: 0.1875rem solid var(--text);
   outline-offset: 0.125rem;
 }
 
@@ -278,7 +338,8 @@ h2 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card {
+  .card,
+  .scheme {
     transition: none;
   }
 

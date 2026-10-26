@@ -2,7 +2,7 @@ import { devices, expect, test } from '@playwright/test';
 import { formatRgb } from 'culori';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
-import { BACKGROUND, tint } from '../../src/theme.ts';
+import { BACKGROUNDS, tint } from '../../src/theme.ts';
 
 // With scripts off, whatever the page shows is what the build prerendered rather than anything rendered in the browser.
 test.use({ javaScriptEnabled: false });
@@ -64,17 +64,32 @@ test('shows which release an app download installs', async ({ page }) => {
   await expect(card.locator('.version')).toHaveText(project?.apk?.version ?? '');
 });
 
-test("edges each card in its site's colour, or the neutral one where it has none", async ({ page }) => {
-  const neutral = await page.evaluate(() =>
-    getComputedStyle(document.documentElement).getPropertyValue('--edge').trim(),
-  );
+for (const [colorScheme, background] of Object.entries(BACKGROUNDS) as ['light' | 'dark', string][]) {
+  test.describe(`in the ${colorScheme} colour scheme`, () => {
+    test.use({ colorScheme });
 
-  for (const project of projects) {
-    const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project.title }) });
+    test("edges each card in its site's colour, or the neutral one where it has none", async ({ page }) => {
+      // Resolved through an element, since the property itself holds both schemes' colours in a `light-dark()`.
+      const neutral = await page.evaluate(() => {
+        const probe = document.body.appendChild(document.createElement('div'));
+        probe.style.color = 'var(--edge)';
 
-    await expect(card).toHaveCSS('border-top-color', formatRgb(tint(project.themeColor) ?? neutral) ?? '');
-  }
-});
+        return getComputedStyle(probe).color;
+      });
+
+      for (const project of projects) {
+        const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project.title }) });
+        const edge = tint(project.themeColor, background);
+
+        await expect(card).toHaveCSS('border-top-color', edge ? (formatRgb(edge) ?? '') : neutral);
+      }
+    });
+
+    test('paints the background the tints are checked against', async ({ page }) => {
+      await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(background) ?? '');
+    });
+  });
+}
 
 test('opens a site from anywhere on its card, but its source from the source link', async ({ page }) => {
   const project = projects.find((p) => p.site && p.description);
@@ -88,10 +103,6 @@ test('opens a site from anywhere on its card, but its source from the source lin
   await expect(page).toHaveURL(project?.site ?? '');
 });
 
-test('paints the background the tints are checked against', async ({ page }) => {
-  await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUND) ?? '');
-});
-
 // A preload whose path Vite failed to resolve would 404 and quietly bring back the swap from the fallback font.
 test('preloads the font the stylesheet draws the page in', async ({ page }) => {
   const font = (await page.locator('link[rel="preload"][as="font"]').getAttribute('href')) ?? '';
@@ -101,9 +112,16 @@ test('preloads the font the stylesheet draws the page in', async ({ page }) => {
   expect(await (await page.request.get(stylesheet)).text()).toContain(font);
 });
 
-test('ships no script but the one that points Android at its downloads', async ({ page }) => {
-  await expect(page.locator('script')).toHaveCount(1);
-  await expect(page.locator('script')).toHaveAttribute('type', 'module');
+// React rendered the page at build time, so what ships is the inline restore of a chosen scheme and one module, which
+// Vite bundles from the scheme switch and the script that points Android at its downloads.
+test('ships no script but the scheme switch and the one that points Android at its downloads', async ({ page }) => {
+  await expect(page.locator('script')).toHaveCount(2);
+  await expect(page.locator('script:not([src])')).toHaveCount(1);
+  await expect(page.locator('script[type="module"][src]')).toHaveCount(1);
+});
+
+test('hides the scheme switch from a browser running no script, which it could not answer', async ({ page }) => {
+  await expect(page.getByRole('button', { name: 'Dark scheme', includeHidden: true })).toBeHidden();
 });
 
 // The PNG icons exist only once the build renders them, so a link to one it missed would 404 without failing anything.
@@ -132,6 +150,36 @@ test('serves every icon the page and its manifest name, at the size they name', 
 
 test.describe('with scripts on', () => {
   test.use({ javaScriptEnabled: true });
+
+  test.describe('in the light colour scheme', () => {
+    test.use({ colorScheme: 'light' });
+
+    test('switches to the dark scheme and remembers it', async ({ page }) => {
+      const button = page.getByRole('button', { name: 'Dark scheme' });
+      const dark = formatRgb(BACKGROUNDS.dark) ?? '';
+
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('body')).toHaveCSS('background-color', dark);
+      await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', dark);
+
+      await page.reload();
+      await expect(page.locator('body')).toHaveCSS('background-color', dark);
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+
+      await button.click();
+      await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
+    });
+  });
+
+  test.describe('in the dark colour scheme', () => {
+    test.use({ colorScheme: 'dark' });
+
+    test('shows the dark scheme as the one in force', async ({ page }) => {
+      await expect(page.getByRole('button', { name: 'Dark scheme' })).toHaveAttribute('aria-pressed', 'true');
+    });
+  });
 
   const project = projects.find((p) => p.apk);
   const open = (page: import('@playwright/test').Page) =>

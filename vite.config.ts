@@ -5,7 +5,7 @@ export default defineConfig({
   build: {
     outDir: '_site',
 
-    // The page's one script imports nothing, so there is no preload for a polyfill to make, only bytes to ship.
+    // The page's scripts import nothing, so there is no preload for a polyfill to make, only bytes to ship.
     modulePreload: { polyfill: false },
   },
   plugins: [
