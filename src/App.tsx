@@ -107,11 +107,14 @@ function Card({ project }: { project: Project }) {
 }
 
 export default function App({ projects }: { projects: Project[] }) {
+  // By the title the card shows, rather than the repo name GitHub lists them by, which can differ.
+  const sorted = projects.toSorted((a, b) => a.title.localeCompare(b.title, 'en'));
+
   return (
     <main>
       <h1>spence.com.au</h1>
       <ul className="cards">
-        {projects.map((project) => (
+        {sorted.map((project) => (
           <Card key={project.repo} project={project} />
         ))}
       </ul>

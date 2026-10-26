@@ -48,6 +48,12 @@ test('prerenders a card for every repo', async ({ page }) => {
   }
 });
 
+test('orders the cards by title', async ({ page }) => {
+  const titles = projects.map((project) => project.title).toSorted((a, b) => a.localeCompare(b, 'en'));
+
+  await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
+});
+
 test('shows which release an app download installs', async ({ page }) => {
   const project = projects.find((p) => p.apk);
 
