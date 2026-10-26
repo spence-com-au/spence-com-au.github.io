@@ -117,7 +117,11 @@ async function readManifest(site: URL): Promise<{ manifest: Manifest; url: URL }
     throw new Error(`Fetching ${url} failed: ${res.status}`);
   }
 
-  return { manifest: (await res.json()) as Manifest, url };
+  try {
+    return { manifest: (await res.json()) as Manifest, url };
+  } catch (cause) {
+    throw new Error(`Fetching ${url} failed: not JSON`, { cause });
+  }
 }
 
 /**
