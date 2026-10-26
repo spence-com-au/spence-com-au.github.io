@@ -19,18 +19,27 @@ jobs:
       - if: "needs.lint.result != 'success'"
         run: 'exit 1'
 
+  # The same scripts `pnpm lint` runs by its `lint:!(fix)` glob, so a new one is checked here without listing it twice.
+  checks:
+    name: 'Checks'
+    runs-on: 'ubuntu-latest'
+    outputs:
+      checks: '${{ steps.checks.outputs.checks }}'
+    steps:
+      - uses: 'actions/checkout@v7.0.1'
+      - id: 'checks'
+        run: >-
+          echo "checks=$(jq --compact-output '[.scripts | keys[] | select(test("^lint:[^:]+$") and . != "lint:fix") |
+          ltrimstr("lint:")]' package.json)" >> "$GITHUB_OUTPUT"
+
   lint:
     name: '${{ matrix.check }}'
+    needs: 'checks'
     runs-on: 'ubuntu-latest'
     strategy:
       fail-fast: false
       matrix:
-        check:
-          - 'css'
-          - 'html'
-          - 'js'
-          - 'prettier'
-          - 'types'
+        check: '${{ fromJSON(needs.checks.outputs.checks) }}'
     steps:
       - uses: 'actions/checkout@v7.0.1'
       - uses: 'pnpm/setup@v3.1.1'
