@@ -121,7 +121,7 @@ test('ships no script but the scheme switch and the one that points Android at i
 });
 
 test('hides the scheme switch from a browser running no script, which it could not answer', async ({ page }) => {
-  await expect(page.getByRole('button', { name: 'Dark theme', includeHidden: true })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Dark scheme', includeHidden: true })).toBeHidden();
 });
 
 // The PNG icons exist only once the build renders them, so a link to one it missed would 404 without failing anything.
@@ -155,7 +155,7 @@ test.describe('with scripts on', () => {
     test.use({ colorScheme: 'light' });
 
     test('switches to the dark scheme and remembers it', async ({ page }) => {
-      const button = page.getByRole('button', { name: 'Dark theme' });
+      const button = page.getByRole('button', { name: 'Dark scheme' });
       const dark = formatRgb(BACKGROUNDS.dark) ?? '';
 
       await expect(button).toHaveAttribute('aria-pressed', 'false');
@@ -177,7 +177,7 @@ test.describe('with scripts on', () => {
     test.use({ colorScheme: 'dark' });
 
     test('shows the dark scheme as the one in force', async ({ page }) => {
-      await expect(page.getByRole('button', { name: 'Dark theme' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Dark scheme' })).toHaveAttribute('aria-pressed', 'true');
     });
   });
 
