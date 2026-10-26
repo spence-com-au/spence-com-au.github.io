@@ -23,10 +23,12 @@
   },
   "dependencies": {
     "@fontsource-variable/martian-mono": "5.2.5",
+    "@xterm/xterm": "6.0.0",
     "culori": "4.0.2",
     "node-html-parser": "9.0.5",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "v86": "0.5.472"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

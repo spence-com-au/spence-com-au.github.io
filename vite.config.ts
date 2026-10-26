@@ -1,6 +1,8 @@
 import react from '@vitejs/plugin-react';
 import { configDefaults, defineConfig } from 'vitest/config';
 
+import { fetchImages } from './scripts/v86.ts';
+
 export default defineConfig({
   build: {
     outDir: '_site',
@@ -17,6 +19,14 @@ export default defineConfig({
       name: 'dev-entry',
       apply: 'serve',
       transformIndexHtml: () => [{ tag: 'script', attrs: { type: 'module', src: '/src/dev.tsx' }, injectTo: 'body' }],
+    },
+
+    // Into the public directory, which the dev server serves from and the build copies into the site. Not for Vitest,
+    // whose server would otherwise fetch megabytes for unit tests that boot nothing.
+    {
+      name: 'v86-images',
+      apply: (_, { mode }) => mode !== 'test',
+      buildStart: () => fetchImages(`${import.meta.dirname}/public/v86`),
     },
   ],
   test: {

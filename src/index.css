@@ -2,7 +2,14 @@
 
 :root {
   color-scheme: light dark;
+}
 
+/**
+ * Declared again on the terminal's dialog, since a browser resolves the `light-dark()` in a custom property against the
+ * scheme of the element declaring it rather than of the one using it.
+ */
+:root,
+.shell dialog {
   /* `BACKGROUNDS` in `src/theme.ts`, which checks each card's tint against it. */
   --background: light-dark(#f4efe6, #1d1b19);
   --surface: light-dark(#fffbf4, #2a2724);
@@ -57,7 +64,8 @@ h1 {
 }
 
 /* A toy block like the cards, sinking onto its edge when pressed. */
-.scheme {
+.scheme,
+.close {
   display: grid;
   flex-shrink: 0;
   place-items: center;
@@ -75,22 +83,26 @@ h1 {
     box-shadow 80ms ease-out;
 }
 
-/* `display` would otherwise override the attribute and show a button no script will answer. */
-.scheme[hidden] {
+/* `display` would otherwise override the attribute and show a control no script will answer. */
+.scheme[hidden],
+.card[hidden] {
   display: none;
 }
 
-.scheme:active {
+.scheme:active,
+.close:active {
   translate: 0 0.1875rem;
   box-shadow: 0 0.0625rem 0 var(--edge);
 }
 
-.scheme:focus-visible {
+.scheme:focus-visible,
+.close:focus-visible {
   outline: 0.1875rem solid var(--text);
   outline-offset: 0.25rem;
 }
 
-.scheme svg {
+.scheme svg,
+.close svg {
   width: 1.5rem;
   height: 1.5rem;
 }
@@ -219,6 +231,18 @@ h2 {
   text-decoration: none;
 }
 
+/* The Terminal card's title is a button, as it opens a dialog rather than a page, drawn as the other cards' links. */
+button.open {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
 /* The card's focus ring stands in for the title's, since the whole card is what the link opens. */
 .open:focus-visible {
   outline: none;
@@ -308,6 +332,39 @@ h2 {
   height: 1rem;
 }
 
+/**
+ * A toy block like the cards, dark in either scheme as a terminal is. `src/linux.ts` draws the terminal in the screen's
+ * font and colours.
+ */
+.shell dialog {
+  box-sizing: border-box;
+  max-width: calc(100% - 2rem);
+  padding: 0.75rem;
+  border: 0.25rem solid var(--edge);
+  border-radius: 0.875rem;
+  background: var(--background);
+  box-shadow: 0 0.5rem 0 var(--edge);
+  color: var(--text);
+  color-scheme: dark;
+}
+
+.shell dialog::backdrop {
+  background: rgb(0 0 0 / 60%);
+}
+
+.shell form {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+/* Eighty columns, as a serial console has, which a phone is too narrow for, so there they scroll sideways. */
+.screen {
+  overflow-x: auto;
+  background: var(--background);
+  font-size: 0.8125rem;
+}
+
 /* One card to a row on a phone, so the tile moves beside the text rather than spending a screen's height above it. */
 @media (width < 40rem) {
   .card {
@@ -340,7 +397,8 @@ h2 {
 
 @media (prefers-reduced-motion: reduce) {
   .card,
-  .scheme {
+  .scheme,
+  .close {
     transition: none;
   }
 

@@ -152,8 +152,9 @@ test('preloads the font the stylesheet draws the page in', async ({ page }) => {
 });
 
 // React rendered the page at build time, so what ships is the inline restore of a chosen scheme and one module, which
-// Vite bundles from the scheme switch and the script that points Android at its downloads.
-test('ships no script but the scheme switch and the one that points Android at its downloads', async ({ page }) => {
+// Vite bundles from the scheme switch, the script that points Android at its downloads and the Terminal card's, which
+// imports the emulator only once the card is opened.
+test('ships no script but the scheme switch, the Terminal card and the Android downloads', async ({ page }) => {
   await expect(page.locator('script')).toHaveCount(2);
   await expect(page.locator('script:not([src])')).toHaveCount(1);
   await expect(page.locator('script[type="module"][src]')).toHaveCount(1);
@@ -161,6 +162,10 @@ test('ships no script but the scheme switch and the one that points Android at i
 
 test('hides the scheme switch from a browser running no script, which it could not answer', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Dark scheme', includeHidden: true })).toBeHidden();
+});
+
+test('hides the Terminal card from a browser running no script, which could boot nothing', async ({ page }) => {
+  await expect(page.getByRole('button', { name: 'Terminal', exact: true, includeHidden: true })).toBeHidden();
 });
 
 // The PNG icons exist only once the build renders them, so a link to one it missed would 404 without failing anything.
@@ -302,5 +307,33 @@ test.describe('with scripts on', () => {
 
   test("opens an app's release page anywhere else", async ({ page }) => {
     await expect(open(page)).toHaveAttribute('href', app().apk.release);
+  });
+
+  // Linux takes seconds to boot in an emulator, more on a slow runner.
+  test('boots a shell in the Terminal card, which carries on where it left off when opened again', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const dialog = page.getByRole('dialog', { name: 'Terminal' });
+    const screen = dialog.locator('.xterm-rows');
+
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+
+    // Dark on the light page, as a terminal is, in the colours xterm.js was given from the stylesheet.
+    await expect(dialog.locator('.xterm-scrollable-element')).toHaveCSS(
+      'background-color',
+      formatRgb(BACKGROUNDS.dark) ?? '',
+    );
+
+    await page.keyboard.type('busybox | head -1\n');
+    await expect(screen).toContainText('BusyBox v1.');
+
+    await dialog.getByRole('button', { name: 'Close terminal' }).click();
+    await expect(dialog).toBeHidden();
+
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await page.keyboard.type('uname -s\n');
+    await expect(screen).toContainText('BusyBox v1.');
+    await expect(screen.getByText('Linux', { exact: true })).toBeVisible();
   });
 });
