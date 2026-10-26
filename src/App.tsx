@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 
 import type { Project } from './project.ts';
-import { tint } from './theme.ts';
+import { BACKGROUNDS, tint } from './theme.ts';
 
 /** GitHub's mark, from [Octicons](https://primer.style/octicons/icon/mark-github-16/) (MIT). */
 const GITHUB = {
@@ -57,7 +57,9 @@ function destination({ title, site, apk, repo }: Project): Destination {
 function Card({ project }: { project: Project }) {
   const { title, description, apk, repo, icon, themeColor } = project;
   const { href, label, mark, android } = destination(project);
-  const edge = tint(themeColor);
+  const light = tint(themeColor, BACKGROUNDS.light);
+  const dark = tint(themeColor, BACKGROUNDS.dark);
+  const edge = light && dark && `light-dark(${light}, ${dark})`;
 
   return (
     <li className="card" data-tinted={edge && ''} style={{ '--tint': edge } as CSSProperties}>

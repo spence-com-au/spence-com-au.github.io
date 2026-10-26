@@ -1,23 +1,25 @@
 @import url('@fontsource-variable/martian-mono');
 
 :root {
-  /* `BACKGROUND` in `src/theme.ts`, which checks each card's tint against it. */
-  --cream: #f4efe6;
-  --paper: #fffbf4;
-  --ink: #1d1b19;
+  color-scheme: light dark;
+
+  /* `BACKGROUNDS` in `src/theme.ts`, which checks each card's tint against it. */
+  --background: light-dark(#f4efe6, #1d1b19);
+  --surface: light-dark(#fffbf4, #2a2724);
+  --text: light-dark(#1d1b19, #f4efe6);
 
   /* The logo's cursor. Too light for text on cream, so it only ever fills shapes. */
   --signal: #ff5a36;
-  --muted: #6b6258;
+  --muted: light-dark(#6b6258, #a39a8f);
 
-  /* The edge of a card whose site has no theme colour for `tint` to darken. */
-  --edge: #1d1b19;
+  /* The edge of a card whose site has no theme colour for `tint` to darken or lighten. */
+  --edge: var(--text);
 }
 
 body {
   margin: 0;
-  background: var(--cream);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--text);
   font-family: 'Martian Mono Variable', ui-monospace, monospace;
 }
 
@@ -97,7 +99,7 @@ h1 {
   padding: 1.25rem 1.25rem 1rem;
   border: 0.25rem solid var(--edge-color);
   border-radius: var(--radius);
-  background: var(--paper);
+  background: var(--surface);
   box-shadow: 0 0.5rem 0 var(--edge-color);
   transition:
     translate 80ms ease-out,
@@ -110,7 +112,7 @@ h1 {
 }
 
 .card:has(.open:focus-visible) {
-  outline: 0.25rem solid var(--ink);
+  outline: 0.25rem solid var(--text);
   outline-offset: 0.375rem;
 }
 
@@ -127,7 +129,7 @@ span.tile {
   align-items: center;
   justify-content: center;
   background: var(--edge-color);
-  color: var(--paper);
+  color: var(--surface);
   font-size: 3rem;
   font-weight: 800;
   line-height: 1;
@@ -142,7 +144,7 @@ span.tile::after {
 
 /* A site's own colour can be as orange as the cursor, so there it takes the initial's colour instead. */
 .card[data-tinted] span.tile::after {
-  background: var(--paper);
+  background: var(--surface);
 }
 
 h2 {
@@ -214,12 +216,12 @@ h2 {
 }
 
 .source:hover {
-  background: var(--cream);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--text);
 }
 
 .source:focus-visible {
-  outline: 0.1875rem solid var(--ink);
+  outline: 0.1875rem solid var(--text);
   outline-offset: 0.125rem;
 }
 

@@ -2,7 +2,7 @@ import { devices, expect, test } from '@playwright/test';
 import { formatRgb } from 'culori';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
-import { BACKGROUND, tint } from '../../src/theme.ts';
+import { BACKGROUNDS, tint } from '../../src/theme.ts';
 
 // With scripts off, whatever the page shows is what the build prerendered rather than anything rendered in the browser.
 test.use({ javaScriptEnabled: false });
@@ -64,17 +64,32 @@ test('shows which release an app download installs', async ({ page }) => {
   await expect(card.locator('.version')).toHaveText(project?.apk?.version ?? '');
 });
 
-test("edges each card in its site's colour, or the neutral one where it has none", async ({ page }) => {
-  const neutral = await page.evaluate(() =>
-    getComputedStyle(document.documentElement).getPropertyValue('--edge').trim(),
-  );
+for (const [colorScheme, background] of Object.entries(BACKGROUNDS) as ['light' | 'dark', string][]) {
+  test.describe(`in the ${colorScheme} colour scheme`, () => {
+    test.use({ colorScheme });
 
-  for (const project of projects) {
-    const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project.title }) });
+    test("edges each card in its site's colour, or the neutral one where it has none", async ({ page }) => {
+      // Resolved through an element, since the property itself holds both schemes' colours in a `light-dark()`.
+      const neutral = await page.evaluate(() => {
+        const probe = document.body.appendChild(document.createElement('div'));
+        probe.style.color = 'var(--edge)';
 
-    await expect(card).toHaveCSS('border-top-color', formatRgb(tint(project.themeColor) ?? neutral) ?? '');
-  }
-});
+        return getComputedStyle(probe).color;
+      });
+
+      for (const project of projects) {
+        const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project.title }) });
+        const edge = tint(project.themeColor, background);
+
+        await expect(card).toHaveCSS('border-top-color', edge ? (formatRgb(edge) ?? '') : neutral);
+      }
+    });
+
+    test('paints the background the tints are checked against', async ({ page }) => {
+      await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(background) ?? '');
+    });
+  });
+}
 
 test('opens a site from anywhere on its card, but its source from the source link', async ({ page }) => {
   const project = projects.find((p) => p.site && p.description);
@@ -86,10 +101,6 @@ test('opens a site from anywhere on its card, but its source from the source lin
   // Forced, because the overlay taking the click is the point: it clicks wherever the text is, as a tap would.
   await card.getByText(project?.description ?? '').click({ force: true });
   await expect(page).toHaveURL(project?.site ?? '');
-});
-
-test('paints the background the tints are checked against', async ({ page }) => {
-  await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUND) ?? '');
 });
 
 // A preload whose path Vite failed to resolve would 404 and quietly bring back the swap from the fallback font.
