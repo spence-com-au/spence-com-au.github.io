@@ -57,9 +57,10 @@ function destination({ title, site, apk, repo }: Project): Destination {
 function Card({ project }: { project: Project }) {
   const { title, description, apk, repo, icon, themeColor } = project;
   const { href, label, mark, android } = destination(project);
+  const edge = tint(themeColor);
 
   return (
-    <li className="card" style={{ '--tint': tint(themeColor) } as CSSProperties}>
+    <li className="card" data-tinted={edge && ''} style={{ '--tint': edge } as CSSProperties}>
       {icon ? (
         <img className="tile" src={icon} alt="" />
       ) : (
@@ -112,7 +113,16 @@ export default function App({ projects }: { projects: Project[] }) {
 
   return (
     <main>
-      <h1>spence.com.au</h1>
+      <h1>
+        <span className="visually-hidden">spence.com.au</span>
+        <span className="wordmark" aria-hidden="true">
+          SPENCE
+          <span className="cursor" />
+        </span>
+        <span className="domain" aria-hidden="true">
+          ~/SPENCE.COM.AU
+        </span>
+      </h1>
       <ul className="cards">
         {sorted.map((project) => (
           <Card key={project.repo} project={project} />

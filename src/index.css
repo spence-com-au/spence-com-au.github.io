@@ -1,21 +1,24 @@
-@import url('@fontsource-variable/baloo-2');
+@import url('@fontsource-variable/martian-mono');
 
 :root {
   /* `BACKGROUND` in `src/theme.ts`, which checks each card's tint against it. */
   --cream: #f4efe6;
   --paper: #fffbf4;
-  --ink: #2f2a24;
+  --ink: #1d1b19;
+
+  /* The logo's cursor. Too light for text on cream, so it only ever fills shapes. */
+  --signal: #ff5a36;
   --muted: #6b6258;
 
   /* The edge of a card whose site has no theme colour for `tint` to darken. */
-  --edge: #857b6e;
+  --edge: #1d1b19;
 }
 
 body {
   margin: 0;
   background: var(--cream);
   color: var(--ink);
-  font-family: 'Baloo 2 Variable', system-ui, sans-serif;
+  font-family: 'Martian Mono Variable', ui-monospace, monospace;
 }
 
 main {
@@ -24,11 +27,50 @@ main {
   padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem) 4rem;
 }
 
+/* The logo: the name in capitals, then a block cursor filling the next character cell. */
 h1 {
-  margin: 0 0 clamp(1.5rem, 4vw, 2.5rem);
-  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 0 clamp(2rem, 5vw, 3rem);
+  font-size: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
   font-weight: 800;
   line-height: 1;
+}
+
+/* Read in place of the logo, whose capitals a screen reader may spell out letter by letter. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.wordmark {
+  white-space: nowrap;
+}
+
+.cursor {
+  display: inline-block;
+  width: 1ch;
+  height: 1.2em;
+  background: var(--signal);
+  vertical-align: -0.24em;
+  animation: blink 1.06s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.domain {
+  color: var(--muted);
+  font-size: clamp(0.8125rem, 0.75rem + 0.3vw, 1rem);
+  font-weight: 500;
 }
 
 .cards {
@@ -46,7 +88,7 @@ h1 {
  */
 .card {
   --edge-color: var(--tint, var(--edge));
-  --radius: 1.75rem;
+  --radius: 0.875rem;
 
   position: relative;
   display: flex;
@@ -76,24 +118,39 @@ h1 {
   width: 6rem;
   height: 6rem;
   margin-bottom: 0.5rem;
-  border-radius: 1.375rem;
+  border-radius: 0.75rem;
 }
 
+/* A card without an icon shows its initial with the cursor after it, as in the logo. */
 span.tile {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--edge-color);
   color: var(--paper);
-  font-size: 3.75rem;
+  font-size: 3rem;
   font-weight: 800;
   line-height: 1;
 }
 
+span.tile::after {
+  content: '';
+  width: 1ch;
+  height: 1.2em;
+  background: var(--signal);
+}
+
+/* A site's own colour can be as orange as the cursor, so there it takes the initial's colour instead. */
+.card[data-tinted] span.tile::after {
+  background: var(--paper);
+}
+
 h2 {
   margin: 0;
-  font-size: 1.625rem;
+  font-size: 1.1875rem;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .open {
@@ -134,8 +191,8 @@ h2 {
 .card p {
   margin: 0;
   color: var(--muted);
-  font-size: 1.0625rem;
-  line-height: 1.35;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 /**
@@ -149,9 +206,9 @@ h2 {
   align-items: center;
   margin-left: -0.5rem;
   padding: 0.25rem 0.625rem 0.25rem 0.5rem;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -181,7 +238,7 @@ h2 {
  */
 .version {
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -204,15 +261,15 @@ h2 {
     width: 4.5rem;
     height: 4.5rem;
     margin: 0;
-    border-radius: 1.125rem;
+    border-radius: 0.625rem;
   }
 
   span.tile {
-    font-size: 2.75rem;
+    font-size: 2.25rem;
   }
 
   h2 {
-    font-size: 1.5rem;
+    font-size: 1.0625rem;
   }
 
   .footer {
@@ -223,5 +280,9 @@ h2 {
 @media (prefers-reduced-motion: reduce) {
   .card {
     transition: none;
+  }
+
+  .cursor {
+    animation: none;
   }
 }
