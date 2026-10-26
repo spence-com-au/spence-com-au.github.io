@@ -1,8 +1,26 @@
-import { devices, expect, test } from '@playwright/test';
+import { devices, expect, test, type Page } from '@playwright/test';
 import { formatRgb } from 'culori';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
 import { BACKGROUNDS, tint } from '../../src/theme.ts';
+
+type Project = (typeof projects)[number];
+
+const cardOf = (page: Page, title: string) =>
+  page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: title }) });
+
+// Throws, so a fixture missing the repo fails saying why rather than as a lookup that matches every card.
+function find<T extends Project>(what: string, predicate: (project: Project) => project is T): T {
+  const project = projects.find(predicate);
+
+  if (!project) {
+    throw new Error(`fixtures/repos.json has no repo ${what}`);
+  }
+
+  return project;
+}
+
+const app = () => find('with an APK', (p): p is Project & { apk: NonNullable<Project['apk']> } => p.apk !== null);
 
 // With scripts off, whatever the page shows is what the build prerendered rather than anything rendered in the browser.
 test.use({ javaScriptEnabled: false });
@@ -17,7 +35,7 @@ test('prerenders a card for every repo', async ({ page }) => {
   await expect(page.getByRole('listitem')).toHaveCount(projects.length);
 
   for (const project of projects) {
-    const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project.title }) });
+    const card = cardOf(page, project.title);
     const open = card.getByRole('heading').getByRole('link');
     const source = card.getByRole('link', { name: `Source code for ${project.title} on GitHub` });
 
@@ -55,13 +73,9 @@ test('orders the cards by title', async ({ page }) => {
 });
 
 test('shows which release an app download installs', async ({ page }) => {
-  const project = projects.find((p) => p.apk);
+  const { apk, title } = app();
 
-  // Without an app in the fixture, the card that downloads one would go untested rather than fail.
-  expect(project, 'fixtures/repos.json has no repo with an APK').toBeDefined();
-
-  const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project?.title }) });
-  await expect(card.locator('.version')).toHaveText(project?.apk?.version ?? '');
+  await expect(cardOf(page, title).locator('.version')).toHaveText(apk.version);
 });
 
 for (const [colorScheme, background] of Object.entries(BACKGROUNDS) as ['light' | 'dark', string][]) {
@@ -78,7 +92,7 @@ for (const [colorScheme, background] of Object.entries(BACKGROUNDS) as ['light' 
       });
 
       for (const project of projects) {
-        const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project.title }) });
+        const card = cardOf(page, project.title);
         const edge = tint(project.themeColor, background);
 
         await expect(card).toHaveCSS('border-top-color', edge ? (formatRgb(edge) ?? '') : neutral);
@@ -92,15 +106,17 @@ for (const [colorScheme, background] of Object.entries(BACKGROUNDS) as ['light' 
 }
 
 test('opens a site from anywhere on its card, but its source from the source link', async ({ page }) => {
-  const project = projects.find((p) => p.site && p.description);
-  const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: project?.title }) });
+  const project = find('with a site and a description', (p): p is Project & { site: string; description: string } =>
+    Boolean(p.site && p.description),
+  );
+  const card = cardOf(page, project.title);
 
   // A trial click fails if anything else would take the click, such as the title link's overlay covering this one.
   await card.getByRole('link', { name: /^Source code/ }).click({ trial: true });
 
   // Forced, because the overlay taking the click is the point: it clicks wherever the text is, as a tap would.
-  await card.getByText(project?.description ?? '').click({ force: true });
-  await expect(page).toHaveURL(project?.site ?? '');
+  await card.getByText(project.description).click({ force: true });
+  await expect(page).toHaveURL(project.site);
 });
 
 // A preload whose path Vite failed to resolve would 404 and quietly bring back the swap from the fallback font.
@@ -181,24 +197,20 @@ test.describe('with scripts on', () => {
     });
   });
 
-  const project = projects.find((p) => p.apk);
-  const open = (page: import('@playwright/test').Page) =>
-    page
-      .getByRole('listitem')
-      .filter({ has: page.getByRole('heading', { name: project?.title }) })
-      .getByRole('heading')
-      .getByRole('link');
+  const open = (page: Page) => cardOf(page, app().title).getByRole('heading').getByRole('link');
 
   test.describe('on Android', () => {
     test.use({ userAgent: devices['Pixel 7'].userAgent });
 
     test('downloads an app from its card', async ({ page }) => {
-      await expect(open(page)).toHaveAttribute('href', project?.apk?.href ?? '');
-      await expect(open(page)).toHaveAccessibleName(`Download ${project?.title} ${project?.apk?.version} for Android`);
+      const { apk, title } = app();
+
+      await expect(open(page)).toHaveAttribute('href', apk.href);
+      await expect(open(page)).toHaveAccessibleName(`Download ${title} ${apk.version} for Android`);
     });
   });
 
   test("opens an app's release page anywhere else", async ({ page }) => {
-    await expect(open(page)).toHaveAttribute('href', project?.apk?.release ?? '');
+    await expect(open(page)).toHaveAttribute('href', app().apk.release);
   });
 });
