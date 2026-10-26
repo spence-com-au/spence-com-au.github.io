@@ -1,0 +1,6 @@
+{
+  "name": "spence.com.au",
+  "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }],
+  "background_color": "#f4efe6",
+  "theme_color": "#f4efe6"
+}
