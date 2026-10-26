@@ -48,6 +48,17 @@ test('prerenders a card for every repo', async ({ page }) => {
   }
 });
 
+test('orders the cards alphabetically by title', async ({ page }) => {
+  const titles = projects.map((project) => project.title).toSorted((a, b) => a.localeCompare(b, 'en'));
+
+  // The fixture lists them out of order, as GitHub's order by repo name can, so a page that kept it would fail.
+  expect(
+    projects.map((project) => project.title),
+    'fixtures/repos.json is already in order',
+  ).not.toEqual(titles);
+  await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
+});
+
 test('shows which release an app download installs', async ({ page }) => {
   const project = projects.find((p) => p.apk);
 

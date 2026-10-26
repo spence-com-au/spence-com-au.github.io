@@ -111,9 +111,12 @@ export default function App({ projects }: { projects: Project[] }) {
     <main>
       <h1>spence.com.au</h1>
       <ul className="cards">
-        {projects.map((project) => (
-          <Card key={project.repo} project={project} />
-        ))}
+        {/* By the title a card shows rather than the repo's name, which a manifest's own name can start differently. */}
+        {projects
+          .toSorted((a, b) => a.title.localeCompare(b.title, 'en'))
+          .map((project) => (
+            <Card key={project.repo} project={project} />
+          ))}
       </ul>
     </main>
   );
