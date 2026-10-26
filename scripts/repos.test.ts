@@ -26,6 +26,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
@@ -130,6 +131,33 @@ describe('listProjects', () => {
         themeColor: '#3f9b4f',
       },
     ]);
+  });
+
+  it('recognises an SVG icon by its type when its URL has no extension', async () => {
+    routes = {
+      ...repos(1, [repo('dino-park', { has_pages: true })]),
+      ...site('dino-park', {
+        icons: [
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon', sizes: 'any', type: 'image/svg+xml' },
+        ],
+      }),
+    };
+
+    expect(await listProjects(DOMAIN)).toMatchObject([{ icon: `https://${DOMAIN}/dino-park/icon` }]);
+  });
+
+  it.each([
+    ['sends', 'secret', 'Bearer secret'],
+    ['omits', '', undefined],
+  ])('%s the GitHub token when GITHUB_TOKEN is %j', async (_, token, authorization) => {
+    vi.stubEnv('GITHUB_TOKEN', token);
+    routes = repos(1, []);
+
+    await listProjects(DOMAIN);
+
+    const init = vi.mocked(fetch).mock.calls[0]?.[1] as { headers: Record<string, string> };
+    expect(init.headers.Authorization).toBe(authorization);
   });
 
   it('falls back to the manifest name, and to the widest bitmap that is not only maskable', async () => {
