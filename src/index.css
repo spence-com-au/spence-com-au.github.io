@@ -140,6 +140,11 @@ span.tile::after {
   background: var(--signal);
 }
 
+/* A site's own colour can be as orange as the cursor, so there it takes the initial's colour instead. */
+.card[data-tinted] span.tile::after {
+  background: var(--paper);
+}
+
 h2 {
   margin: 0;
   font-size: 1.1875rem;

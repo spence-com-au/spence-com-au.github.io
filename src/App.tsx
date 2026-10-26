@@ -57,9 +57,10 @@ function destination({ title, site, apk, repo }: Project): Destination {
 function Card({ project }: { project: Project }) {
   const { title, description, apk, repo, icon, themeColor } = project;
   const { href, label, mark, android } = destination(project);
+  const edge = tint(themeColor);
 
   return (
-    <li className="card" style={{ '--tint': tint(themeColor) } as CSSProperties}>
+    <li className="card" data-tinted={edge && ''} style={{ '--tint': edge } as CSSProperties}>
       {icon ? (
         <img className="tile" src={icon} alt="" />
       ) : (
