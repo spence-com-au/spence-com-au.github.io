@@ -187,6 +187,17 @@ test('serves every icon the page and its manifest name, at the size they name', 
   }
 });
 
+// The page sends the system scheme's `change` event as it renders a frame, so wait until two have passed after it sees
+// the new scheme: two changes back to back could otherwise end where they began and send none.
+async function emulateSystemScheme(page: Page, colorScheme: 'light' | 'dark'): Promise<void> {
+  await page.emulateMedia({ colorScheme });
+  await page.waitForFunction(
+    (dark) => matchMedia('(prefers-color-scheme: dark)').matches === dark,
+    colorScheme === 'dark',
+  );
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+
 test.describe('with scripts on', () => {
   test.use({ javaScriptEnabled: true });
 
@@ -209,6 +220,62 @@ test.describe('with scripts on', () => {
 
       await button.click();
       await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
+    });
+
+    test('follows the system scheme until one is chosen, then ignores it', async ({ page }) => {
+      const button = page.getByRole('button', { name: 'Dark scheme' });
+
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+
+      // Chosen against the system, so a listener that went on following it would turn the page dark again below.
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+
+      await emulateSystemScheme(page, 'light');
+      await emulateSystemScheme(page, 'dark');
+
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
+    });
+
+    // A `localStorage` that throws on any access, as in some private windows or with site data blocked.
+    test.describe('with storage unavailable', () => {
+      const errors: Error[] = [];
+
+      test.beforeEach(async ({ page }) => {
+        errors.length = 0;
+        page.on('pageerror', (error) => errors.push(error));
+
+        await page.addInitScript(() => {
+          Object.defineProperty(window, 'localStorage', {
+            get() {
+              throw new DOMException('Denied', 'SecurityError');
+            },
+          });
+        });
+        await page.reload();
+      });
+
+      // Uncaught, the inline script's error would end only that script and leave the module scripts to carry on, so
+      // the page's behaviour cannot show that the error was caught; the error itself does.
+      test('switches the scheme for the visit and follows the system on the next', async ({ page }) => {
+        const button = page.getByRole('button', { name: 'Dark scheme' });
+
+        await expect(button).toHaveAttribute('aria-pressed', 'false');
+        await button.click();
+        await expect(button).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.dark) ?? '');
+
+        await page.reload();
+        await expect(button).toHaveAttribute('aria-pressed', 'false');
+        await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.light) ?? '');
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await expect(button).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('body')).toHaveCSS('background-color', formatRgb(BACKGROUNDS.dark) ?? '');
+
+        expect(errors).toEqual([]);
+      });
     });
   });
 
