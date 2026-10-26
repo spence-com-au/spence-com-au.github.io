@@ -5,7 +5,7 @@ export default {
   rules: {
     /**
      * A comment spanning more than one line is a starred block, matching the JavaScript beside it: a bare opener, a
-     * star down the left of every line after it, and the closer alone on the last. A single-line comment is left alone.
+     * star down the left of every line after it and the closer alone on the last. A single-line comment is left alone.
      *
      * Prettier will not do this — it reflows prose and code to `printWidth` but never the inside of a comment — so
      * without this rule nothing says which shape a comment takes. The pattern matches the text between the delimiters,
