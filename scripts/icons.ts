@@ -5,15 +5,15 @@ import { readFile } from 'node:fs/promises';
 import { Resvg } from '@resvg/resvg-js';
 
 /**
- * `plate` fills behind the favicon, whose rounded corners are otherwise transparent, for an icon that must be full
- * bleed, since iOS paints transparent pixels black and a launcher's mask can show any margin `inset` leaves. `inset`
- * shrinks the artwork into the circle that Android keeps whatever shape it crops a maskable icon to, whose radius is
- * 40% of the icon's width.
+ * `plate` fills behind the favicon, whose rounded corners are otherwise transparent: a square for an icon that must be
+ * full bleed, since iOS paints transparent pixels black and a launcher's mask can show any margin `inset` leaves, or a
+ * circle for an avatar, outside which it stays transparent. `inset` shrinks the artwork into the circle that Android
+ * keeps whatever shape it crops a maskable icon to, whose radius is 40% of the icon's width.
  */
 export interface Icon {
   file: string;
   size: number;
-  plate?: 'square';
+  plate?: 'square' | 'circle';
   inset?: boolean;
 }
 
@@ -24,6 +24,12 @@ export const SITE_ICONS: Icon[] = [
   { file: 'apple-touch-icon.png', size: 180, plate: 'square' },
   { file: 'icon-512.png', size: 512 },
   { file: 'icon-maskable-512.png', size: 512, plate: 'square', inset: true },
+];
+
+// The avatars for use away from the site, which `pnpm render:logos` renders into `logos/`.
+export const AVATARS: Icon[] = [
+  { file: 'avatar-github-500.png', size: 500 },
+  { file: 'avatar-round-500.png', size: 500, plate: 'circle', inset: true },
 ];
 
 // Brings the artwork's farthest corner from 44% of the width out from the centre to 37%, within the 40% safe zone.
@@ -48,7 +54,9 @@ export function renderIcon({ favicon, plate }: Awaited<ReturnType<typeof readFav
   const scale = icon.inset ? INSET_SCALE : 1;
   const art = `<g transform="translate(16 16) scale(${scale}) translate(-16 -16)">${favicon}</g>`;
   const fill = icon.plate ? `<rect width="32" height="32" fill="${plate}"/>` : '';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${fill}${art}</svg>`;
+  const clip = icon.plate === 'circle' ? '<clipPath id="plate"><circle cx="16" cy="16" r="16"/></clipPath>' : '';
+  const body = `${clip}<g${clip && ' clip-path="url(#plate)"'}>${fill}${art}</g>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${body}</svg>`;
 
   return new Resvg(svg, { fitTo: { mode: 'width', value: icon.size } }).render().asPng();
 }

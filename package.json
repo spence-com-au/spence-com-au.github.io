@@ -17,6 +17,7 @@
     "lint:prettier:fix": "prettier --write .",
     "lint:types": "tsc",
     "preview": "vite preview",
+    "render:logos": "node scripts/render-logos.ts",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },
