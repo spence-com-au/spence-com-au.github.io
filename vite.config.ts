@@ -7,7 +7,8 @@ export default defineConfig({
   build: {
     outDir: '_site',
 
-    // The page's scripts import nothing, so there is no preload for a polyfill to make, only bytes to ship.
+    // The page preloads only what the Terminal card imports once opened, and every current browser preloads a module
+    // itself, so a polyfill would be bytes shipped for none.
     modulePreload: { polyfill: false },
   },
   plugins: [
