@@ -193,30 +193,29 @@ h1 {
 }
 
 /**
- * A card without an icon shows its initial with the cursor after it, as in the logo. Drawn in the page's background,
- * which `tint` holds the edge to 3:1 against, where the card's own surface may fall short of it.
+ * A card without an icon shows its title's initials, in type that shrinks past two of them so that three take the
+ * width two would. Drawn in the page's background, which `tint` holds the edge to 3:1 against, where the card's own
+ * surface may fall short of it.
  */
 span.tile {
+  --shrink: calc(2 / max(2, var(--letters, 1)));
+
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--edge-color);
   color: var(--background);
-  font-size: 3rem;
+  font-size: calc(3rem * var(--shrink));
   font-weight: 800;
   line-height: 1;
 }
 
-span.tile::after {
+/* The Terminal's `$` keeps the logo's cursor after it, a prompt waiting for input. */
+.shell .tile::after {
   content: '';
   width: 1ch;
   height: 1.2em;
   background: var(--signal);
-}
-
-/* A site's own colour can be as orange as the cursor, so there it takes the initial's colour instead. */
-.card[data-tinted] span.tile::after {
-  background: var(--background);
 }
 
 h2 {
@@ -408,7 +407,7 @@ button.open {
   }
 
   span.tile {
-    font-size: 2.25rem;
+    font-size: calc(2.25rem * var(--shrink));
   }
 
   h2 {

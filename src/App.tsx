@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import type { Project } from './project.ts';
+import { initials, type Project } from './project.ts';
 import { BACKGROUNDS, tint } from './theme.ts';
 
 /** GitHub's mark, from [Octicons](https://primer.style/octicons/icon/mark-github-16/) (MIT). */
@@ -71,17 +71,18 @@ function destination({ title, site, apk, repo }: Project): Destination {
 function Card({ project }: { project: Project }) {
   const { title, description, apk, repo, icon, themeColor } = project;
   const { href, label, mark, android } = destination(project);
+  const monogram = initials(title);
   const light = tint(themeColor, BACKGROUNDS.light);
   const dark = tint(themeColor, BACKGROUNDS.dark);
   const edge = light && dark && `light-dark(${light}, ${dark})`;
 
   return (
-    <li className="card" data-tinted={edge && ''} style={{ '--tint': edge } as CSSProperties}>
+    <li className="card" style={{ '--tint': edge } as CSSProperties}>
       {icon ? (
         <img className="tile" src={icon} alt="" />
       ) : (
-        <span className="tile" aria-hidden="true">
-          {title[0]}
+        <span className="tile" aria-hidden="true" style={{ '--letters': monogram.length } as CSSProperties}>
+          {monogram}
         </span>
       )}
       <h2>

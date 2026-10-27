@@ -3,6 +3,7 @@ import { formatRgb } from 'culori';
 import { parse } from 'node-html-parser';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
+import { initials } from '../../src/project.ts';
 import { BACKGROUNDS, tint } from '../../src/theme.ts';
 
 type Project = (typeof projects)[number];
@@ -58,7 +59,7 @@ test('prerenders a card for every repo', async ({ page }) => {
     if (project.icon) {
       await expect(card.locator('img')).toHaveAttribute('src', project.icon);
     } else {
-      await expect(card.locator('.tile')).toHaveText(project.title[0] ?? '');
+      await expect(card.locator('.tile')).toHaveText(initials(project.title));
     }
 
     if (project.description) {
@@ -82,6 +83,27 @@ test('orders the cards by title', async ({ page }) => {
 
   await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
 });
+
+// Three initials in the type two take would overflow the tile, and a phone's tile is smaller still.
+for (const [name, { viewport }] of [
+  ['a desktop', devices['Desktop Chrome']],
+  ['a phone', devices['Pixel 7']],
+] as const) {
+  test(`fits three initials in a tile on ${name}`, async ({ page }) => {
+    const { title } = find(
+      'without an icon, of three initials',
+      (p): p is Project => !p.icon && initials(p.title).length === 3,
+    );
+
+    await page.setViewportSize(viewport);
+
+    expect(
+      await cardOf(page, title)
+        .locator('.tile')
+        .evaluate((tile) => tile.scrollWidth <= tile.clientWidth),
+    ).toBe(true);
+  });
+}
 
 test('shows which release an app download installs', async ({ page }) => {
   const { apk, title } = app();
