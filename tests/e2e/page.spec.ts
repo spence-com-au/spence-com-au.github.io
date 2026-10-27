@@ -162,8 +162,9 @@ test('preloads the font the stylesheet draws the page in', async ({ page }) => {
 });
 
 // React rendered the page at build time, so what ships is the inline restore of a chosen scheme and one module, which
-// Vite bundles from the scheme switch and the script that points Android at its downloads.
-test('ships no script but the scheme switch and the one that points Android at its downloads', async ({ page }) => {
+// Vite bundles from the scheme switch, the script that points Android at its downloads and the Terminal card's, which
+// imports the emulator only once the card is opened.
+test('ships no script but the scheme switch, the Terminal card and the Android downloads', async ({ page }) => {
   await expect(page.locator('script')).toHaveCount(2);
   await expect(page.locator('script:not([src])')).toHaveCount(1);
   await expect(page.locator('script[type="module"][src]')).toHaveCount(1);
@@ -171,6 +172,10 @@ test('ships no script but the scheme switch and the one that points Android at i
 
 test('hides the scheme switch from a browser running no script, which it could not answer', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Dark scheme', includeHidden: true })).toBeHidden();
+});
+
+test('hides the Terminal card from a browser running no script, which could boot nothing', async ({ page }) => {
+  await expect(page.getByRole('button', { name: 'Terminal', exact: true, includeHidden: true })).toBeHidden();
 });
 
 // The PNG icons exist only once the build renders them, so a link to one it missed would 404 without failing anything.
@@ -335,5 +340,109 @@ test.describe('with scripts on', () => {
 
   test("opens an app's release page anywhere else", async ({ page }) => {
     await expect(open(page)).toHaveAttribute('href', app().apk.release);
+  });
+
+  // The fixture holds a repo titled after it, so that this fails for a Terminal card put last rather than in its place.
+  test('orders the Terminal card among the others by title', async ({ page }) => {
+    const titles = [...projects.map((project) => project.title), 'Terminal'].toSorted((a, b) =>
+      a.localeCompare(b, 'en'),
+    );
+
+    expect(titles.at(-1)).not.toBe('Terminal');
+    await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
+  });
+
+  // A file missing, as after a deploy that lacks it, the emulator's WebAssembly answered with a page, as the preview
+  // server answers a path it lacks, or a module v86 fails to start, each of which would otherwise leave the terminal
+  // waiting for ever. Unhandled, the rejection would surface only as a page error.
+  for (const { name, glob, answer, says } of [
+    {
+      name: 'a missing kernel',
+      glob: '**/v86/buildroot-bzimage68.bin',
+      answer: { status: 404 },
+      says: /Fetching buildroot-bzimage68\.bin failed: 404/,
+    },
+    {
+      name: 'a missing emulator',
+      glob: '**/v86-*.wasm',
+      answer: { status: 404 },
+      says: /Fetching v86-\S+\.wasm failed: 404/,
+    },
+    {
+      name: 'a WebAssembly module other than the emulator',
+      glob: '**/v86-*.wasm',
+      answer: { body: Buffer.from('\0asm\x01\0\0\0'), contentType: 'application/wasm' },
+      says: /rust_init/,
+    },
+    {
+      name: 'a page in place of the emulator',
+      glob: '**/v86-*.wasm',
+      answer: { body: '<!doctype html>', contentType: 'text/html' },
+      says: /WebAssembly/,
+    },
+  ]) {
+    test(`says why the Terminal could not boot from ${name}, and tries again when opened again`, async ({ page }) => {
+      test.setTimeout(60_000);
+
+      const errors: Error[] = [];
+      const dialog = page.getByRole('dialog', { name: 'Terminal' });
+
+      page.on('pageerror', (error) => errors.push(error));
+      await page.route(glob, (route) => route.fulfill(answer));
+      await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+      await expect(dialog).toContainText(says);
+      await expect(dialog).toContainText('Close and open it to try again.');
+      await dialog.getByRole('button', { name: 'Close terminal' }).click();
+
+      await page.unroute(glob);
+      await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+      await expect(dialog.locator('.xterm-rows')).toContainText('~% ', { timeout: 30_000 });
+      await expect(dialog).not.toContainText('try again');
+      expect(errors).toEqual([]);
+    });
+  }
+
+  // Linux takes seconds to boot in an emulator, more on a slow runner.
+  test('boots a shell in the Terminal card, which carries on where it left off when opened again', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const dialog = page.getByRole('dialog', { name: 'Terminal' });
+    const screen = dialog.locator('.xterm-rows');
+
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+
+    // Dark on the light page, as a terminal is, in the colours xterm.js was given from the stylesheet.
+    await expect(dialog.locator('.xterm-scrollable-element')).toHaveCSS(
+      'background-color',
+      formatRgb(BACKGROUNDS.dark) ?? '',
+    );
+
+    // Across every card and down the page but the same margin at either end, with the terminal grown to fill it one way
+    // or the other.
+    const window = (await dialog.boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 };
+    const cards = (await page.getByRole('list').boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 };
+    const viewport = page.viewportSize() ?? { width: 0, height: 0 };
+    const fill = await dialog.locator('.screen').evaluate((screen) => {
+      const drawn = screen.querySelector('.xterm-screen') as HTMLElement;
+
+      return Math.max(drawn.offsetWidth / screen.clientWidth, drawn.offsetHeight / screen.clientHeight);
+    });
+
+    expect(window.x).toBeLessThanOrEqual(cards.x);
+    expect(window.x + window.width).toBeGreaterThanOrEqual(cards.x + cards.width);
+    expect(window.y + window.height).toBe(viewport.height - window.y);
+    expect(fill).toBeGreaterThan(0.9);
+
+    await page.keyboard.type('busybox | head -1\n');
+    await expect(screen).toContainText('BusyBox v1.');
+
+    await dialog.getByRole('button', { name: 'Close terminal' }).click();
+    await expect(dialog).toBeHidden();
+
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await page.keyboard.type('uname -s\n');
+    await expect(screen).toContainText('BusyBox v1.');
+    await expect(screen.getByText('Linux', { exact: true })).toBeVisible();
   });
 });

@@ -13,3 +13,6 @@
 # Playwright
 /playwright-report/
 /test-results/
+
+# v86, fetched by `scripts/v86.ts`
+/public/v86/

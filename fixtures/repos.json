@@ -56,5 +56,14 @@
     "repo": "https://github.com/spence-com-au/replacement-patterns",
     "icon": null,
     "themeColor": null
+  },
+  {
+    "title": "Weather Station",
+    "description": "Readings from a backyard weather station.",
+    "site": null,
+    "apk": null,
+    "repo": "https://github.com/spence-com-au/weather-station",
+    "icon": null,
+    "themeColor": null
   }
 ]
