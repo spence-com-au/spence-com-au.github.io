@@ -24,8 +24,7 @@ export function connect(card: HTMLElement): void {
       });
   }
 
-  card.hidden = false;
-  card.querySelector('.open')?.addEventListener('click', async () => {
+  async function open(): Promise<void> {
     dialog.showModal();
     linux ??= start();
 
@@ -36,7 +35,31 @@ export function connect(card: HTMLElement): void {
       await booted.emulator.run();
       booted.terminal.focus();
     }
-  });
+  }
+
+  card.hidden = false;
+  card.querySelector('.open')?.addEventListener('click', open);
+
+  // A backtick opens or closes it from anywhere, as a game's console does. Caught before the terminal sees it, so that
+  // closing from the shell works, at the cost of the shell never receiving one: `$(…)` substitutes a command instead.
+  addEventListener(
+    'keydown',
+    (event) => {
+      if (event.key !== '`' || event.repeat || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (dialog.open) {
+        dialog.close();
+      } else {
+        void open();
+      }
+    },
+    { capture: true },
+  );
 
   // Paused rather than left running behind the page, to carry on where it left off when opened again.
   dialog.addEventListener('close', async () => {

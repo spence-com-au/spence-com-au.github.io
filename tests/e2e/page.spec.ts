@@ -402,6 +402,28 @@ test.describe('with scripts on', () => {
     });
   }
 
+  test('opens and closes the Terminal on a backtick, which the shell never receives', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const dialog = page.getByRole('dialog', { name: 'Terminal' });
+    const screen = dialog.locator('.xterm-rows');
+
+    await expect(page.getByRole('button', { name: 'Terminal', exact: true })).toHaveAttribute('aria-keyshortcuts', '`');
+    await page.keyboard.press('`');
+    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+
+    // Closed from inside the shell, half way through a command, which carries on without the backtick once reopened.
+    await page.keyboard.type('echo ok');
+    await page.keyboard.press('`');
+    await expect(dialog).toBeHidden();
+
+    await page.keyboard.press('`');
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(screen.getByText('ok', { exact: true })).toBeVisible();
+    await expect(screen).not.toContainText('`');
+  });
+
   // Linux takes seconds to boot in an emulator, more on a slow runner.
   test('boots a shell in the Terminal card, which carries on where it left off when opened again', async ({ page }) => {
     test.setTimeout(60_000);

@@ -136,7 +136,7 @@ function Shell() {
         $
       </span>
       <h2>
-        <button className="open" type="button">
+        <button className="open" type="button" aria-keyshortcuts="`">
           {TERMINAL}
         </button>
       </h2>
