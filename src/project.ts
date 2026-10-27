@@ -22,3 +22,11 @@ export interface Project {
    */
   themeColor: string | null;
 }
+
+/** What a card without an icon shows in its place: the first letter of each word of its title. */
+export function initials(title: string): string {
+  return title
+    .split(' ')
+    .map((word) => word[0])
+    .join('');
+}
