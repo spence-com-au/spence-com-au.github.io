@@ -2,22 +2,39 @@
 // they load only once the card is first opened, and the emulator runs only while the dialog is open.
 import type { boot } from './linux.ts';
 
+type Linux = Awaited<ReturnType<typeof boot>>;
+
 /** Shows the card and answers it. Called here on the built page, and by `src/dev.tsx` once React has rendered it. */
 export function connect(card: HTMLElement): void {
   const dialog = card.querySelector('dialog') as HTMLDialogElement;
-  let linux: ReturnType<typeof boot> | undefined;
+  const screen = dialog.querySelector('.screen') as HTMLElement;
+  let linux: Promise<Linux | undefined> | undefined;
+
+  // A failure says why on the screen and is forgotten, so that opening the card again tries again, from a clear screen.
+  function start(): Promise<Linux | undefined> {
+    screen.replaceChildren();
+
+    return import('./linux.ts')
+      .then((module) => module.boot(screen))
+      .catch((error: unknown) => {
+        linux = undefined;
+        screen.textContent = `${error instanceof Error ? error.message : String(error)}. Close and open it to try again.`;
+
+        return undefined;
+      });
+  }
 
   card.hidden = false;
   card.querySelector('.open')?.addEventListener('click', async () => {
     dialog.showModal();
-    linux ??= import('./linux.ts').then((module) => module.boot(dialog.querySelector('.screen') as HTMLElement));
+    linux ??= start();
 
-    const { emulator, terminal } = await linux;
+    const booted = await linux;
 
-    // Unless it was closed again while the images loaded.
-    if (dialog.open) {
-      await emulator.run();
-      terminal.focus();
+    // Unless it failed, or was closed again while the images loaded.
+    if (booted && dialog.open) {
+      await booted.emulator.run();
+      booted.terminal.focus();
     }
   });
 

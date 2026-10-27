@@ -9,9 +9,9 @@ import wasm from 'v86/build/v86.wasm?url';
 /**
  * Wires a terminal in `screen`, in the font and colours it is styled in, to the serial port of an emulator booting the
  * images `scripts/v86.ts` fetches, and resolves once they have loaded. Left to the caller to start, as the dialog the
- * terminal is in may have closed by then.
+ * terminal is in may have closed by then. Rejects, taking the terminal away again, when an image cannot be fetched.
  */
-export function boot(screen: HTMLElement): Promise<{ emulator: V86; terminal: Terminal }> {
+export async function boot(screen: HTMLElement): Promise<{ emulator: V86; terminal: Terminal }> {
   const style = getComputedStyle(screen);
   const terminal = new Terminal({
     fontFamily: style.fontFamily,
@@ -19,11 +19,60 @@ export function boot(screen: HTMLElement): Promise<{ emulator: V86; terminal: Te
     theme: { background: style.backgroundColor, foreground: style.color, cursor: style.getPropertyValue('--signal') },
   });
 
+  terminal.open(screen);
+
+  // A serial console tells the guest no size, so it takes the terminal to be 80 columns by 24 rows. Rather than more of
+  // them, which it would not use, the font grows until those fill the screen, scaled from the size they are drawn at.
+  const drawn = screen.querySelector('.xterm-screen') as HTMLElement;
+  const least = terminal.options.fontSize ?? 0;
+  const fit = new ResizeObserver(() => {
+    if (drawn.offsetWidth) {
+      const scale = Math.min(screen.clientWidth / drawn.offsetWidth, screen.clientHeight / drawn.offsetHeight);
+      terminal.options.fontSize = Math.max(least, Math.floor((terminal.options.fontSize ?? least) * scale));
+    }
+  });
+
+  fit.observe(screen);
+
+  // Fetched here rather than by v86, which only logs a missing image and retries a failed one forever, so a failure
+  // could never surface. Megabytes, so the wait shows on the screen it is for, on one line rewritten as it counts up.
+  let loaded = 0;
+
+  async function image(file: string): Promise<{ buffer: ArrayBuffer }> {
+    const res = await fetch(`/v86/${file}`);
+
+    if (!res.ok || !res.body) {
+      throw new Error(`Fetching ${file} failed: ${res.status}`);
+    }
+
+    const chunks: Uint8Array<ArrayBuffer>[] = [];
+    const reader = res.body.getReader();
+
+    for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
+      chunks.push(chunk.value);
+      loaded += chunk.value.length;
+      terminal.write(`\r\x1b[KFetching Linux: ${(loaded / 1e6).toFixed(1)} MB`);
+    }
+
+    return { buffer: await new Blob(chunks).arrayBuffer() };
+  }
+
+  let images;
+
+  try {
+    images = await Promise.all(['seabios.bin', 'vgabios.bin', 'buildroot-bzimage68.bin'].map(image));
+  } catch (error) {
+    fit.disconnect();
+    terminal.dispose();
+    throw error;
+  }
+
+  const [bios, vga_bios, bzimage] = images;
   const emulator = new V86({
     wasm_path: wasm,
-    bios: { url: '/v86/seabios.bin' },
-    vga_bios: { url: '/v86/vgabios.bin' },
-    bzimage: { url: '/v86/buildroot-bzimage68.bin' },
+    bios,
+    vga_bios,
+    bzimage,
     cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
     filesystem: {},
     disable_keyboard: true,
@@ -36,29 +85,8 @@ export function boot(screen: HTMLElement): Promise<{ emulator: V86; terminal: Te
   emulator.add_listener('serial0-output-byte', (byte) => terminal.write(Uint8Array.of(byte)));
   terminal.onData((data) => emulator.serial_send_bytes(0, encoder.encode(data)));
 
-  // Megabytes, so the wait shows on the screen it is for, on one line rewritten as it counts up.
-  emulator.add_listener('download-progress', ({ file_name, loaded }) => {
-    terminal.write(`\r\x1b[KFetching ${file_name.split('/').pop()}: ${(loaded / 1e6).toFixed(1)} MB`);
-  });
+  await new Promise((resolve) => emulator.add_listener('emulator-loaded', resolve));
+  terminal.write('\r\x1b[K');
 
-  terminal.open(screen);
-
-  // A serial console tells the guest no size, so it takes the terminal to be 80 columns by 24 rows. Rather than more of
-  // them, which it would not use, the font grows until those fill the screen, scaled from the size they are drawn at.
-  const drawn = screen.querySelector('.xterm-screen') as HTMLElement;
-  const least = terminal.options.fontSize ?? 0;
-
-  new ResizeObserver(() => {
-    if (drawn.offsetWidth) {
-      const scale = Math.min(screen.clientWidth / drawn.offsetWidth, screen.clientHeight / drawn.offsetHeight);
-      terminal.options.fontSize = Math.max(least, Math.floor((terminal.options.fontSize ?? least) * scale));
-    }
-  }).observe(screen);
-
-  return new Promise((resolve) => {
-    emulator.add_listener('emulator-loaded', () => {
-      terminal.write('\r\x1b[K');
-      resolve({ emulator, terminal });
-    });
-  });
+  return { emulator, terminal };
 }

@@ -5,8 +5,9 @@
 }
 
 /**
- * Declared again on the terminal's dialog, since a browser resolves the `light-dark()` in a custom property against the
- * scheme of the element declaring it rather than of the one using it.
+ * Declared again on the terminal's dialog. The spec resolves the `light-dark()` in an unregistered custom property where
+ * it is used, but Chromium resolves it against the scheme of the element declaring it, and drew the dark dialog cream
+ * without this.
  */
 :root,
 .shell dialog {
