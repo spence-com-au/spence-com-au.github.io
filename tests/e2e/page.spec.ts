@@ -424,6 +424,56 @@ test.describe('with scripts on', () => {
     });
   }
 
+  test('opens and closes the Terminal on a backtick, which the shell never receives', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const dialog = page.getByRole('dialog', { name: 'Terminal' });
+    const screen = dialog.locator('.xterm-rows');
+
+    await expect(page.getByRole('button', { name: 'Terminal', exact: true })).toHaveAttribute('aria-keyshortcuts', '`');
+    await page.keyboard.press('`');
+    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+
+    // Closed from inside the shell, half way through a command, which carries on without the backtick once reopened.
+    await page.keyboard.type('echo ok');
+    await page.keyboard.press('`');
+    await expect(dialog).toBeHidden();
+
+    // Held this time, so that the key repeats once the terminal has focus again. It repeats once, an odd number of times,
+    // so that a repeat which toggled would leave the dialog closed.
+    await page.keyboard.down('`');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
+    await page.keyboard.down('`');
+    await page.keyboard.up('`');
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(screen.getByText('ok', { exact: true })).toBeVisible();
+    await expect(screen).not.toContainText('`');
+  });
+
+  // Dispatched rather than typed, since Playwright types as a US layout does and most of these stand for other layouts'
+  // keys. Ctrl with a backtick, which it could type, is beside them as a modifier that must not count.
+  for (const { name, init, opens } of [
+    {
+      name: 'a backtick typed with AltGr',
+      init: { key: '`', ctrlKey: true, altKey: true, modifierAltGraph: true },
+      opens: true,
+    },
+    { name: 'a backtick typed with Option', init: { key: '`', altKey: true }, opens: true },
+    { name: 'a dead key, even the one marked with a backtick', init: { key: 'Dead', code: 'Backquote' }, opens: false },
+    { name: 'Ctrl and a backtick', init: { key: '`', ctrlKey: true }, opens: false },
+  ]) {
+    test(`${opens ? 'opens' : 'leaves closed'} the Terminal on ${name}`, async ({ page }) => {
+      await page.evaluate(
+        (init) => dispatchEvent(new KeyboardEvent('keydown', { ...init, bubbles: true, cancelable: true })),
+        init,
+      );
+
+      await expect(page.getByRole('dialog', { name: 'Terminal' })).toBeVisible({ visible: opens });
+    });
+  }
+
   // Linux takes seconds to boot in an emulator, more on a slow runner.
   test('boots a shell in the Terminal card, which carries on where it left off when opened again', async ({ page }) => {
     test.setTimeout(60_000);

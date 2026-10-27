@@ -24,8 +24,7 @@ export function connect(card: HTMLElement): void {
       });
   }
 
-  card.hidden = false;
-  card.querySelector('.open')?.addEventListener('click', async () => {
+  async function open(): Promise<void> {
     dialog.showModal();
     linux ??= start();
 
@@ -36,7 +35,44 @@ export function connect(card: HTMLElement): void {
       await booted.emulator.run();
       booted.terminal.focus();
     }
-  });
+  }
+
+  card.hidden = false;
+  card.querySelector('.open')?.addEventListener('click', open);
+
+  // A backtick opens or closes it from anywhere, as a game's console does. Caught before the terminal sees it, so that
+  // closing from the shell works, at the cost of the shell never receiving one: `$(…)` substitutes a command instead.
+  //
+  // Alt counts, as Option on a Mac and AltGr elsewhere type the backtick on some layouts, and so does the Ctrl that
+  // Windows reports alongside AltGr. Ctrl and Meta otherwise do not, being the browser's and the system's own shortcuts.
+  // A layout where the backtick is a dead key does not count either: that keydown names no character, only `Dead`,
+  // which a dead key for any other accent names alike.
+  addEventListener(
+    'keydown',
+    (event) => {
+      const modified = event.metaKey || (event.ctrlKey && !event.getModifierState('AltGraph'));
+
+      if (event.key !== '`' || modified) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Swallowed but not toggled on, as the key repeats while held, so that holding it neither flickers the dialog nor
+      // types a run of backticks into the shell it just opened.
+      if (event.repeat) {
+        return;
+      }
+
+      if (dialog.open) {
+        dialog.close();
+      } else {
+        void open();
+      }
+    },
+    { capture: true },
+  );
 
   // Paused rather than left running behind the page, to carry on where it left off when opened again.
   dialog.addEventListener('close', async () => {
