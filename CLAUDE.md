@@ -26,5 +26,5 @@
 
   ```bash
   curl -s "https://uploads.github.com/user-attachments/assets?name=$FILE&content_type=image/png&repository_id=$(gh api repos/{owner}/{repo} --jq .id)" \
-    -X POST -H "Authorization: Bearer $(gh auth token)" --data-binary "@$FILE" | jq -r .url
+    -X POST -H "Authorization: Bearer $(gh auth token)" --data-binary "@$FILE" | jq -er .url
   ```
