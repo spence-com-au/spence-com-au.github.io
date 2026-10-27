@@ -2,6 +2,7 @@
 export interface Project {
   title: string;
   description: string | null;
+  icon: string | null;
 
   /** The path of the repo's GitHub Pages site under this domain, or nothing when it publishes none. */
   site: string | null;
@@ -14,9 +15,10 @@ export interface Project {
 
   /** The repo's page on GitHub. */
   repo: string;
-  icon: string | null;
 
-  /** The site manifest's `theme_color` as written there, which `tint` darkens or lightens where it would not
-   * show against the background. */
+  /**
+   * The site manifest's `theme_color` as written there, which `tint` darkens or lightens where it would not show
+   * against the background.
+   */
   themeColor: string | null;
 }

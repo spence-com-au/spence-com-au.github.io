@@ -44,7 +44,9 @@ interface Destination {
   label?: string;
   mark?: typeof GITHUB;
 
-  /** Where the card opens instead on Android, which `src/android.ts` switches it to, since only Android installs an APK. */
+  /**
+   * Where the card opens instead on Android, which `src/android.ts` switches it to, since only Android installs an APK.
+   */
   android?: { href: string; label: string };
 }
 

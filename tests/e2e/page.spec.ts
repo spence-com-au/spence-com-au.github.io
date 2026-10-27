@@ -67,6 +67,16 @@ test('prerenders a card for every repo', async ({ page }) => {
   }
 });
 
+// `scripts/build.ts` splices the cards into the page with `String.replace`, which reads a `$&`, `` $` `` or `$'` in a
+// replacement string as a pattern for part of the page.
+test('shows the replacement patterns in a description as written', async ({ page }) => {
+  const { title, description } = find('with a `$&` in its description', (p): p is Project =>
+    p.description.includes('$&'),
+  );
+
+  await expect(cardOf(page, title)).toContainText(description);
+});
+
 test('orders the cards by title', async ({ page }) => {
   const titles = projects.map((project) => project.title).toSorted((a, b) => a.localeCompare(b, 'en'));
 
@@ -217,7 +227,15 @@ test.describe('with scripts on', () => {
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'true');
       await expect(page.locator('body')).toHaveCSS('background-color', dark);
-      await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', dark);
+
+      // Every meta, since `sync` rewrites them all and one it skipped would still show the browser the old colour.
+      const metas = page.locator('meta[name="theme-color"]');
+
+      await expect(metas).toHaveCount(2);
+
+      for (const meta of await metas.all()) {
+        await expect(meta).toHaveAttribute('content', dark);
+      }
 
       await page.reload();
       await expect(page.locator('body')).toHaveCSS('background-color', dark);
@@ -302,6 +320,21 @@ test.describe('with scripts on', () => {
 
       await expect(open(page)).toHaveAttribute('href', apk.href);
       await expect(open(page)).toHaveAccessibleName(`Download ${title} ${apk.version} for Android`);
+    });
+  });
+
+  // Chromium reports its platform in `userAgentData`, whatever the `User-Agent` string says, so a desktop string here
+  // reaches only that branch.
+  test.describe('on Android by its client hints alone', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'userAgentData', { value: { platform: 'Android' } });
+      });
+      await page.reload();
+    });
+
+    test('downloads an app from its card', async ({ page }) => {
+      await expect(open(page)).toHaveAttribute('href', app().apk.href);
     });
   });
 

@@ -117,7 +117,14 @@ async function readManifest(site: URL): Promise<{ manifest: Manifest; url: URL }
     throw new Error(`Fetching ${url} failed: ${res.status}`);
   }
 
-  return { manifest: (await res.json()) as Manifest, url };
+  // Read outside the `try`, so that only a parse failure is reported as not JSON and a dropped connection as itself.
+  const body = await res.text();
+
+  try {
+    return { manifest: JSON.parse(body) as Manifest, url };
+  } catch (cause) {
+    throw new Error(`Fetching ${url} failed: not JSON`, { cause });
+  }
 }
 
 /**
