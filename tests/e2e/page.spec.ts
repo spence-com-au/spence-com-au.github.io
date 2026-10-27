@@ -417,11 +417,11 @@ test.describe('with scripts on', () => {
     await page.keyboard.press('`');
     await expect(dialog).toBeHidden();
 
-    // Held this time, so that it repeats once the terminal has its focus again.
+    // Held this time, so that it repeats once the terminal has its focus again: once, as a repeat that toggled would then
+    // leave the dialog closed.
     await page.keyboard.down('`');
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
-    await page.keyboard.down('`');
     await page.keyboard.down('`');
     await page.keyboard.up('`');
     await expect(dialog).toBeVisible();
@@ -429,6 +429,27 @@ test.describe('with scripts on', () => {
     await expect(screen.getByText('ok', { exact: true })).toBeVisible();
     await expect(screen).not.toContainText('`');
   });
+
+  // Dispatched rather than typed, since Playwright types as a US layout does, and other layouts' keys are what these are.
+  for (const { name, init, opens } of [
+    {
+      name: 'a backtick typed with AltGr',
+      init: { key: '`', ctrlKey: true, altKey: true, modifierAltGraph: true },
+      opens: true,
+    },
+    { name: 'a dead backtick on its own key', init: { key: 'Dead', code: 'Backquote' }, opens: true },
+    { name: 'a dead key elsewhere', init: { key: 'Dead', code: 'BracketLeft' }, opens: false },
+    { name: 'Ctrl and a backtick', init: { key: '`', ctrlKey: true }, opens: false },
+  ]) {
+    test(`${opens ? 'opens' : 'leaves closed'} the Terminal on ${name}`, async ({ page }) => {
+      await page.evaluate(
+        (init) => dispatchEvent(new KeyboardEvent('keydown', { ...init, bubbles: true, cancelable: true })),
+        init,
+      );
+
+      await expect(page.getByRole('dialog', { name: 'Terminal' })).toBeVisible({ visible: opens });
+    });
+  }
 
   // Linux takes seconds to boot in an emulator, more on a slow runner.
   test('boots a shell in the Terminal card, which carries on where it left off when opened again', async ({ page }) => {
