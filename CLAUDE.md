@@ -17,9 +17,14 @@
   which lists the live repos into `repos.json`, then `pnpm build` and `pnpm preview` — and `master`'s from
   https://spence.com.au, which serves it. Show each state the change adds, and at phone width where the layout differs
   there. A bug fix shows the page before and after, the broken state beside the fixed one, so a reviewer sees both what
-  was wrong and that it no longer is. GitHub takes an image upload only through its web editor, so commit the images to
-  the branch, embed them in the PR body by that commit's SHA (`…/blob/<sha>/<path>?raw=true`) and remove them in the
-  next commit: the pinned links keep working, and the squash merge carries neither commit into `master`. The body rather
-  than a comment, because the body is what a reviewer reads first and the one place that can always show the current
-  state: when a later push changes what the page draws, take the screenshots again and replace them there, rather than
-  leaving the old set in place or posting a new set in a comment.
+  was wrong and that it no longer is. Upload each image through the undocumented endpoint GitHub's web editor uses,
+  [described here](https://island94.org/2026/08/programmatically-upload-attachments-to-github-issues-pull-requests-comments),
+  and embed the URL it returns in the PR body, so nothing lands on the branch. The body rather than a comment, because
+  the body is what a reviewer reads first and the one place that can always show the current state: when a later push
+  changes what the page draws, take the screenshots again and replace them there, rather than leaving the old set in
+  place or posting a new set in a comment.
+
+  ```bash
+  curl -s "https://uploads.github.com/user-attachments/assets?name=$FILE&content_type=image/png&repository_id=$(gh api repos/{owner}/{repo} --jq .id)" \
+    -X POST -H "Authorization: Bearer $(gh auth token)" --data-binary "@$FILE" | jq -er .url
+  ```
