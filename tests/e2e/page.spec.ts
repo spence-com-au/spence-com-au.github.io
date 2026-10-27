@@ -417,8 +417,8 @@ test.describe('with scripts on', () => {
     await page.keyboard.press('`');
     await expect(dialog).toBeHidden();
 
-    // Held this time, so that it repeats once the terminal has its focus again: once, as a repeat that toggled would then
-    // leave the dialog closed.
+    // Held this time, so that the key repeats once the terminal has focus again. It repeats once, an odd number of times,
+    // so that a repeat which toggled would leave the dialog closed.
     await page.keyboard.down('`');
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
@@ -437,8 +437,7 @@ test.describe('with scripts on', () => {
       init: { key: '`', ctrlKey: true, altKey: true, modifierAltGraph: true },
       opens: true,
     },
-    { name: 'a dead backtick on its own key', init: { key: 'Dead', code: 'Backquote' }, opens: true },
-    { name: 'a dead key elsewhere', init: { key: 'Dead', code: 'BracketLeft' }, opens: false },
+    { name: 'a dead key, even the one marked with a backtick', init: { key: 'Dead', code: 'Backquote' }, opens: false },
     { name: 'Ctrl and a backtick', init: { key: '`', ctrlKey: true }, opens: false },
   ]) {
     test(`${opens ? 'opens' : 'leaves closed'} the Terminal on ${name}`, async ({ page }) => {
