@@ -47,5 +47,14 @@
     "repo": "https://github.com/spence-com-au/pogo-utils",
     "icon": "https://spence.com.au/pogo-utils/icons/512.png",
     "themeColor": "#ffffff"
+  },
+  {
+    "title": "Replacement Patterns",
+    "description": "Keeps $&, $` and $' as written rather than as replacement patterns.",
+    "site": null,
+    "apk": null,
+    "repo": "https://github.com/spence-com-au/replacement-patterns",
+    "icon": null,
+    "themeColor": null
   }
 ]
