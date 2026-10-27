@@ -210,6 +210,14 @@ span.tile {
   line-height: 1;
 }
 
+/* The Terminal's `$` keeps the logo's cursor after it, a prompt waiting for input. */
+.shell .tile::after {
+  content: '';
+  width: 1ch;
+  height: 1.2em;
+  background: var(--signal);
+}
+
 h2 {
   margin: 0;
   font-size: 1.1875rem;
