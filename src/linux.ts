@@ -10,7 +10,7 @@ import wasm from 'v86/build/v86.wasm?url';
  * Wires a terminal in `screen`, in the font and colours it is styled in, to the serial port of an emulator booting the
  * images `scripts/v86.ts` fetches, and resolves once they have loaded. Left to the caller to start, as the dialog the
  * terminal is in may have closed by then. Rejects, taking the terminal away again, when the emulator or an image cannot
- * be fetched, or the emulator is not WebAssembly.
+ * be fetched, the emulator is not WebAssembly or it fails as it starts.
  */
 export async function boot(screen: HTMLElement): Promise<{ emulator: V86; terminal: Terminal }> {
   const style = getComputedStyle(screen);
