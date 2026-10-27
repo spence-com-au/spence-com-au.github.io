@@ -352,9 +352,9 @@ test.describe('with scripts on', () => {
     await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
   });
 
-  // A file missing, as after a deploy that lacks it, or served as the page in its place, as GitHub Pages and the preview
-  // server answer a path they lack, either of which v86 left to load would wait on for ever. Unhandled, the rejection
-  // would surface only as a page error.
+  // A file missing, as after a deploy that lacks it, or the emulator's WebAssembly answered with a page, as the preview
+  // server answers a path it lacks: v86 left to load either would wait on it for ever. Unhandled, the rejection would
+  // surface only as a page error.
   for (const { name, glob, answer, says } of [
     {
       name: 'a missing kernel',
