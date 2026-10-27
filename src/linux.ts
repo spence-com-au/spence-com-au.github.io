@@ -34,15 +34,16 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
 
   fit.observe(screen);
 
-  // Fetched here rather than by v86, which only logs a missing image and retries a failed one forever, so a failure
-  // could never surface. Megabytes, so the wait shows on the screen it is for, on one line rewritten as it counts up.
+  // The emulator and its images are fetched here rather than by v86, which only logs a missing file and retries a failed
+  // one forever, so a failure could never surface. Megabytes, so the wait shows on the screen it is for, on one line
+  // rewritten as it counts up.
   let loaded = 0;
 
-  async function image(file: string): Promise<{ buffer: ArrayBuffer }> {
-    const res = await fetch(`/v86/${file}`);
+  async function download(url: string): Promise<ArrayBuffer> {
+    const res = await fetch(url);
 
     if (!res.ok || !res.body) {
-      throw new Error(`Fetching ${file} failed: ${res.status}`);
+      throw new Error(`Fetching ${url.split('/').pop()} failed: ${res.status}`);
     }
 
     const chunks: Uint8Array<ArrayBuffer>[] = [];
@@ -54,25 +55,36 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
       terminal.write(`\r\x1b[KFetching Linux: ${(loaded / 1e6).toFixed(1)} MB`);
     }
 
-    return { buffer: await new Blob(chunks).arrayBuffer() };
+    return new Blob(chunks).arrayBuffer();
   }
 
-  let images;
+  async function load() {
+    const image = async (file: string) => ({ buffer: await download(`/v86/${file}`) });
+    const [code, bios, vga_bios, bzimage] = await Promise.all([
+      download(wasm),
+      image('seabios.bin'),
+      image('vgabios.bin'),
+      image('buildroot-bzimage68.bin'),
+    ]);
+
+    // Compiled here too, so that a file that is not WebAssembly fails here rather than inside v86.
+    return { module: await WebAssembly.compile(code), bios, vga_bios, bzimage };
+  }
+
+  let files;
 
   try {
-    images = await Promise.all(['seabios.bin', 'vgabios.bin', 'buildroot-bzimage68.bin'].map(image));
+    files = await load();
   } catch (error) {
     fit.disconnect();
     terminal.dispose();
     throw error;
   }
 
-  const [bios, vga_bios, bzimage] = images;
+  const { module, ...images } = files;
   const emulator = new V86({
-    wasm_path: wasm,
-    bios,
-    vga_bios,
-    bzimage,
+    wasm_fn: async (imports) => (await WebAssembly.instantiate(module, imports)).exports,
+    ...images,
     cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
     filesystem: {},
     disable_keyboard: true,

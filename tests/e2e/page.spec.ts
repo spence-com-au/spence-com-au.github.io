@@ -352,27 +352,49 @@ test.describe('with scripts on', () => {
     await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
   });
 
-  // An image missing, as after a deploy that lacks it, which v86 left to load would wait on for ever. Unhandled, the
-  // rejection would surface only as a page error.
-  test('says why the Terminal could not boot, and tries again when opened again', async ({ page }) => {
-    test.setTimeout(60_000);
+  // A file missing, as after a deploy that lacks it, or served as the page in its place, as GitHub Pages and the preview
+  // server answer a path they lack, either of which v86 left to load would wait on for ever. Unhandled, the rejection
+  // would surface only as a page error.
+  for (const { name, glob, answer, says } of [
+    {
+      name: 'a missing kernel',
+      glob: '**/v86/buildroot-bzimage68.bin',
+      answer: { status: 404 },
+      says: /Fetching buildroot-bzimage68\.bin failed: 404/,
+    },
+    {
+      name: 'a missing emulator',
+      glob: '**/v86-*.wasm',
+      answer: { status: 404 },
+      says: /Fetching v86-\S+\.wasm failed: 404/,
+    },
+    {
+      name: 'a page in place of the emulator',
+      glob: '**/v86-*.wasm',
+      answer: { body: '<!doctype html>', contentType: 'text/html' },
+      says: /WebAssembly/,
+    },
+  ]) {
+    test(`says why the Terminal could not boot from ${name}, and tries again when opened again`, async ({ page }) => {
+      test.setTimeout(60_000);
 
-    const errors: Error[] = [];
-    const dialog = page.getByRole('dialog', { name: 'Terminal' });
-    const kernel = '**/v86/buildroot-bzimage68.bin';
+      const errors: Error[] = [];
+      const dialog = page.getByRole('dialog', { name: 'Terminal' });
 
-    page.on('pageerror', (error) => errors.push(error));
-    await page.route(kernel, (route) => route.fulfill({ status: 404 }));
-    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
-    await expect(dialog).toContainText('Fetching buildroot-bzimage68.bin failed: 404');
-    await dialog.getByRole('button', { name: 'Close terminal' }).click();
+      page.on('pageerror', (error) => errors.push(error));
+      await page.route(glob, (route) => route.fulfill(answer));
+      await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+      await expect(dialog).toContainText(says);
+      await expect(dialog).toContainText('Close and open it to try again.');
+      await dialog.getByRole('button', { name: 'Close terminal' }).click();
 
-    await page.unroute(kernel);
-    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
-    await expect(dialog.locator('.xterm-rows')).toContainText('~% ', { timeout: 30_000 });
-    await expect(dialog).not.toContainText('failed');
-    expect(errors).toEqual([]);
-  });
+      await page.unroute(glob);
+      await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+      await expect(dialog.locator('.xterm-rows')).toContainText('~% ', { timeout: 30_000 });
+      await expect(dialog).not.toContainText('try again');
+      expect(errors).toEqual([]);
+    });
+  }
 
   // Linux takes seconds to boot in an emulator, more on a slow runner.
   test('boots a shell in the Terminal card, which carries on where it left off when opened again', async ({ page }) => {
