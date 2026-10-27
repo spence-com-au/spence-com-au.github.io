@@ -72,6 +72,9 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
     return { module: await WebAssembly.compile(code), bios, vga_bios, bzimage };
   }
 
+  // Kept for the `catch`, which destroys whatever of it was set up before a failure.
+  let created: V86 | undefined;
+
   try {
     const { module, ...images } = await load();
     const emulator = new V86({
@@ -86,6 +89,7 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
 
     const encoder = new TextEncoder();
 
+    created = emulator;
     emulator.add_listener('serial0-output-byte', (byte) => terminal.write(Uint8Array.of(byte)));
     terminal.onData((data) => emulator.serial_send_bytes(0, encoder.encode(data)));
 
@@ -109,6 +113,9 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
 
     return { emulator, terminal };
   } catch (error) {
+    // An emulator that failed before building its machine throws on being destroyed too, which says nothing the first
+    // failure did not.
+    created?.destroy().catch(() => undefined);
     fit.disconnect();
     terminal.dispose();
     throw error;
