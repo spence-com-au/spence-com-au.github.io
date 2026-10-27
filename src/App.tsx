@@ -77,7 +77,7 @@ function Card({ project }: { project: Project }) {
   const edge = light && dark && `light-dark(${light}, ${dark})`;
 
   return (
-    <li className="card" data-tinted={edge && ''} style={{ '--tint': edge } as CSSProperties}>
+    <li className="card" style={{ '--tint': edge } as CSSProperties}>
       {icon ? (
         <img className="tile" src={icon} alt="" />
       ) : (
