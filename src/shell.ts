@@ -45,12 +45,18 @@ export function connect(card: HTMLElement): void {
   addEventListener(
     'keydown',
     (event) => {
-      if (event.key !== '`' || event.repeat || event.ctrlKey || event.altKey || event.metaKey) {
+      if (event.key !== '`' || event.ctrlKey || event.altKey || event.metaKey) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
+
+      // Swallowed but not toggled on, as the key repeats while held, so that holding it neither flickers the dialog nor
+      // types a run of backticks into the shell it just opened.
+      if (event.repeat) {
+        return;
+      }
 
       if (dialog.open) {
         dialog.close();

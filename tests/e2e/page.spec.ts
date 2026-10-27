@@ -417,7 +417,13 @@ test.describe('with scripts on', () => {
     await page.keyboard.press('`');
     await expect(dialog).toBeHidden();
 
-    await page.keyboard.press('`');
+    // Held this time, so that it repeats once the terminal has its focus again.
+    await page.keyboard.down('`');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
+    await page.keyboard.down('`');
+    await page.keyboard.down('`');
+    await page.keyboard.up('`');
     await expect(dialog).toBeVisible();
     await page.keyboard.press('Enter');
     await expect(screen.getByText('ok', { exact: true })).toBeVisible();
