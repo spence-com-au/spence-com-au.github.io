@@ -333,12 +333,15 @@ button.open {
 }
 
 /**
- * A toy block like the cards, dark in either scheme as a terminal is. `src/linux.ts` draws the terminal in the screen's
- * font and colours.
+ * A toy block like the cards, dark in either scheme as a terminal is, over the whole page but a margin. `src/linux.ts`
+ * draws the terminal in the screen's font and colours.
  */
 .shell dialog {
   box-sizing: border-box;
-  max-width: calc(100% - 2rem);
+  width: calc(100% - 2rem);
+  max-width: none;
+  height: calc(100% - 2rem);
+  max-height: none;
   padding: 0.75rem;
   border: 0.25rem solid var(--edge);
   border-radius: 0.875rem;
@@ -346,6 +349,12 @@ button.open {
   box-shadow: 0 0.5rem 0 var(--edge);
   color: var(--text);
   color-scheme: dark;
+}
+
+/* Only once open, since `display` would otherwise override the closed dialog's `none`. */
+.shell dialog[open] {
+  display: flex;
+  flex-direction: column;
 }
 
 .shell dialog::backdrop {
@@ -358,11 +367,26 @@ button.open {
   margin-bottom: 0.75rem;
 }
 
-/* Eighty columns, as a serial console has, which a phone is too narrow for, so there they scroll sideways. */
+/**
+ * The rest of the dialog, which `src/linux.ts` grows the font to fill from this size as the least. A phone is too narrow
+ * for the eighty columns even at that, so there they scroll sideways.
+ */
 .screen {
-  overflow-x: auto;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   background: var(--background);
   font-size: 0.8125rem;
+}
+
+/**
+ * At the top, where a terminal starts, rather than stretched below its rows, and centred across by its margins, which
+ * unlike centring by alignment leave none of it out of reach where it overflows.
+ */
+.screen > .xterm {
+  align-self: flex-start;
+  margin-inline: auto;
 }
 
 /* One card to a row on a phone, so the tile moves beside the text rather than spending a screen's height above it. */

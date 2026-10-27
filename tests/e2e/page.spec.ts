@@ -335,6 +335,22 @@ test.describe('with scripts on', () => {
       formatRgb(BACKGROUNDS.dark) ?? '',
     );
 
+    // Across every card and down the page but the same margin at either end, with the terminal grown to fill it one way
+    // or the other.
+    const window = (await dialog.boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 };
+    const cards = (await page.getByRole('list').boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 };
+    const viewport = page.viewportSize() ?? { width: 0, height: 0 };
+    const fill = await dialog.locator('.screen').evaluate((screen) => {
+      const drawn = screen.querySelector('.xterm-screen') as HTMLElement;
+
+      return Math.max(drawn.offsetWidth / screen.clientWidth, drawn.offsetHeight / screen.clientHeight);
+    });
+
+    expect(window.x).toBeLessThanOrEqual(cards.x);
+    expect(window.x + window.width).toBeGreaterThanOrEqual(cards.x + cards.width);
+    expect(window.y + window.height).toBe(viewport.height - window.y);
+    expect(fill).toBeGreaterThan(0.9);
+
     await page.keyboard.type('busybox | head -1\n');
     await expect(screen).toContainText('BusyBox v1.');
 

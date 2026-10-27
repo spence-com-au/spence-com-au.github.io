@@ -43,6 +43,18 @@ export function boot(screen: HTMLElement): Promise<{ emulator: V86; terminal: Te
 
   terminal.open(screen);
 
+  // A serial console tells the guest no size, so it takes the terminal to be 80 columns by 24 rows. Rather than more of
+  // them, which it would not use, the font grows until those fill the screen, scaled from the size they are drawn at.
+  const drawn = screen.querySelector('.xterm-screen') as HTMLElement;
+  const least = terminal.options.fontSize ?? 0;
+
+  new ResizeObserver(() => {
+    if (drawn.offsetWidth) {
+      const scale = Math.min(screen.clientWidth / drawn.offsetWidth, screen.clientHeight / drawn.offsetHeight);
+      terminal.options.fontSize = Math.max(least, Math.floor((terminal.options.fontSize ?? least) * scale));
+    }
+  }).observe(screen);
+
   return new Promise((resolve) => {
     emulator.add_listener('emulator-loaded', () => {
       terminal.write('\r\x1b[K');
