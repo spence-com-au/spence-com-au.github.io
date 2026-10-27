@@ -43,13 +43,14 @@ export function connect(card: HTMLElement): void {
   // A backtick opens or closes it from anywhere, as a game's console does. Caught before the terminal sees it, so that
   // closing from the shell works, at the cost of the shell never receiving one: `$(…)` substitutes a command instead.
   //
-  // AltGr counts, though Windows reports it as Ctrl and Alt, so that a layout typing the backtick with it opens the
-  // terminal too. A layout where the backtick is a dead key does not: that keydown names no character, only `Dead`,
+  // Alt counts, as Option on a Mac and AltGr elsewhere type the backtick on some layouts, and so does the Ctrl that
+  // Windows reports alongside AltGr. Ctrl and Meta otherwise do not, being the browser's and the system's own shortcuts.
+  // A layout where the backtick is a dead key does not count either: that keydown names no character, only `Dead`,
   // which a dead key for any other accent names alike.
   addEventListener(
     'keydown',
     (event) => {
-      const modified = event.metaKey || ((event.ctrlKey || event.altKey) && !event.getModifierState('AltGraph'));
+      const modified = event.metaKey || (event.ctrlKey && !event.getModifierState('AltGraph'));
 
       if (event.key !== '`' || modified) {
         return;

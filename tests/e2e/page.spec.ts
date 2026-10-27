@@ -430,13 +430,15 @@ test.describe('with scripts on', () => {
     await expect(screen).not.toContainText('`');
   });
 
-  // Dispatched rather than typed, since Playwright types as a US layout does, and other layouts' keys are what these are.
+  // Dispatched rather than typed, since Playwright types as a US layout does and most of these stand for other layouts'
+  // keys. Ctrl with a backtick, which it could type, is beside them as a modifier that must not count.
   for (const { name, init, opens } of [
     {
       name: 'a backtick typed with AltGr',
       init: { key: '`', ctrlKey: true, altKey: true, modifierAltGraph: true },
       opens: true,
     },
+    { name: 'a backtick typed with Option', init: { key: '`', altKey: true }, opens: true },
     { name: 'a dead key, even the one marked with a backtick', init: { key: 'Dead', code: 'Backquote' }, opens: false },
     { name: 'Ctrl and a backtick', init: { key: '`', ctrlKey: true }, opens: false },
   ]) {
