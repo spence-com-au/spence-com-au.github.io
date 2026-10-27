@@ -352,9 +352,9 @@ test.describe('with scripts on', () => {
     await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
   });
 
-  // A file missing, as after a deploy that lacks it, or the emulator's WebAssembly answered with a page, as the preview
-  // server answers a path it lacks: v86 left to load either would wait on it for ever. Unhandled, the rejection would
-  // surface only as a page error.
+  // A file missing, as after a deploy that lacks it, the emulator's WebAssembly answered with a page, as the preview
+  // server answers a path it lacks, or a module v86 fails to start, each of which would otherwise leave the terminal
+  // waiting for ever. Unhandled, the rejection would surface only as a page error.
   for (const { name, glob, answer, says } of [
     {
       name: 'a missing kernel',
@@ -367,6 +367,12 @@ test.describe('with scripts on', () => {
       glob: '**/v86-*.wasm',
       answer: { status: 404 },
       says: /Fetching v86-\S+\.wasm failed: 404/,
+    },
+    {
+      name: 'a WebAssembly module other than the emulator',
+      glob: '**/v86-*.wasm',
+      answer: { body: Buffer.from('\0asm\x01\0\0\0'), contentType: 'application/wasm' },
+      says: /rust_init/,
     },
     {
       name: 'a page in place of the emulator',

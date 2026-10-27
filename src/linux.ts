@@ -72,34 +72,45 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
     return { module: await WebAssembly.compile(code), bios, vga_bios, bzimage };
   }
 
-  let files;
-
   try {
-    files = await load();
+    const { module, ...images } = await load();
+    const emulator = new V86({
+      wasm_fn: async (imports) => (await WebAssembly.instantiate(module, imports)).exports,
+      ...images,
+      cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
+      filesystem: {},
+      disable_keyboard: true,
+      disable_mouse: true,
+      disable_speaker: true,
+    });
+
+    const encoder = new TextEncoder();
+
+    emulator.add_listener('serial0-output-byte', (byte) => terminal.write(Uint8Array.of(byte)));
+    terminal.onData((data) => emulator.serial_send_bytes(0, encoder.encode(data)));
+
+    // v86 starts asynchronously and leaves a failure there, such as memory it cannot allocate, unhandled rather than
+    // reporting it. Nothing else on the page runs meanwhile, so until it has loaded, an unhandled rejection is its.
+    await new Promise((resolve, reject) => {
+      function fail(event: PromiseRejectionEvent): void {
+        event.preventDefault();
+        removeEventListener('unhandledrejection', fail);
+        reject(event.reason);
+      }
+
+      addEventListener('unhandledrejection', fail);
+      emulator.add_listener('emulator-loaded', () => {
+        removeEventListener('unhandledrejection', fail);
+        resolve(undefined);
+      });
+    });
+
+    terminal.write('\r\x1b[K');
+
+    return { emulator, terminal };
   } catch (error) {
     fit.disconnect();
     terminal.dispose();
     throw error;
   }
-
-  const { module, ...images } = files;
-  const emulator = new V86({
-    wasm_fn: async (imports) => (await WebAssembly.instantiate(module, imports)).exports,
-    ...images,
-    cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
-    filesystem: {},
-    disable_keyboard: true,
-    disable_mouse: true,
-    disable_speaker: true,
-  });
-
-  const encoder = new TextEncoder();
-
-  emulator.add_listener('serial0-output-byte', (byte) => terminal.write(Uint8Array.of(byte)));
-  terminal.onData((data) => emulator.serial_send_bytes(0, encoder.encode(data)));
-
-  await new Promise((resolve) => emulator.add_listener('emulator-loaded', resolve));
-  terminal.write('\r\x1b[K');
-
-  return { emulator, terminal };
 }
