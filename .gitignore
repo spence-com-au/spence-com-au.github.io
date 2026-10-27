@@ -1,6 +1,7 @@
 # Build artefacts
 /repos.json
 /_site/
+/_fixture-site/
 /.ssr/
 
 # Claude

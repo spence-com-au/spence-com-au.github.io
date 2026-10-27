@@ -17,7 +17,7 @@ export interface Icon {
   inset?: boolean;
 }
 
-// The site's icons, which the build renders into `_site/`.
+// The site's icons, which the build renders into Vite's `build.outDir`, or the `--outDir` it is given.
 export const SITE_ICONS: Icon[] = [
   { file: 'favicon-16.png', size: 16 },
   { file: 'favicon-32.png', size: 32 },
