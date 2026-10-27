@@ -309,6 +309,16 @@ test.describe('with scripts on', () => {
     await expect(open(page)).toHaveAttribute('href', app().apk.release);
   });
 
+  // The fixture holds a repo titled after it, so that this fails for a Terminal card put last rather than in its place.
+  test('orders the Terminal card among the others by title', async ({ page }) => {
+    const titles = [...projects.map((project) => project.title), 'Terminal'].toSorted((a, b) =>
+      a.localeCompare(b, 'en'),
+    );
+
+    expect(titles.at(-1)).not.toBe('Terminal');
+    await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
+  });
+
   // Linux takes seconds to boot in an emulator, more on a slow runner.
   test('boots a shell in the Terminal card, which carries on where it left off when opened again', async ({ page }) => {
     test.setTimeout(60_000);

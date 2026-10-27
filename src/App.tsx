@@ -121,9 +121,11 @@ function Card({ project }: { project: Project }) {
   );
 }
 
+const TERMINAL = 'Terminal';
+
 /**
  * Opens a shell on Linux booted in the browser. Hidden until `src/shell.ts` shows it, since without a script it could
- * boot nothing, and last rather than among the projects, as it is not one of them.
+ * boot nothing.
  */
 function Shell() {
   return (
@@ -133,11 +135,11 @@ function Shell() {
       </span>
       <h2>
         <button className="open" type="button">
-          Terminal
+          {TERMINAL}
         </button>
       </h2>
       <p>A BusyBox shell on Linux, booted in your browser.</p>
-      <dialog aria-label="Terminal">
+      <dialog aria-label={TERMINAL}>
         <form method="dialog">
           <button className="close" type="submit" aria-label="Close terminal">
             <Mark icon={CLOSE} />
@@ -150,8 +152,12 @@ function Shell() {
 }
 
 export default function App({ projects }: { projects: Project[] }) {
-  // By the title the card shows, rather than the repo name GitHub lists them by, which can differ.
-  const sorted = projects.toSorted((a, b) => a.title.localeCompare(b.title, 'en'));
+  // By the title the card shows, rather than the repo name GitHub lists them by, which can differ, with the Terminal's
+  // among them.
+  const cards = [
+    ...projects.map((project) => ({ title: project.title, card: <Card key={project.repo} project={project} /> })),
+    { title: TERMINAL, card: <Shell key={TERMINAL} /> },
+  ].toSorted((a, b) => a.title.localeCompare(b.title, 'en'));
 
   return (
     <main>
@@ -172,12 +178,7 @@ export default function App({ projects }: { projects: Project[] }) {
           <Mark icon={SCHEME} />
         </button>
       </header>
-      <ul className="cards">
-        {sorted.map((project) => (
-          <Card key={project.repo} project={project} />
-        ))}
-        <Shell />
-      </ul>
+      <ul className="cards">{cards.map(({ card }) => card)}</ul>
     </main>
   );
 }

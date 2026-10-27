@@ -47,5 +47,14 @@
     "repo": "https://github.com/spence-com-au/pogo-utils",
     "icon": "https://spence.com.au/pogo-utils/icons/512.png",
     "themeColor": "#ffffff"
+  },
+  {
+    "title": "Weather Station",
+    "description": "Readings from a backyard weather station.",
+    "site": null,
+    "apk": null,
+    "repo": "https://github.com/spence-com-au/weather-station",
+    "icon": null,
+    "themeColor": null
   }
 ]
