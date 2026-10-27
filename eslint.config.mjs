@@ -1,4 +1,3 @@
-import globals from 'globals';
 import { includeIgnoreFile } from 'eslint/config';
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier/flat';
@@ -39,13 +38,6 @@ export default [
           beforeLineComment: true,
         },
       ],
-    },
-  },
-
-  {
-    files: ['**/*.mjs'],
-    languageOptions: {
-      globals: globals.nodeBuiltin,
     },
   },
 ];
