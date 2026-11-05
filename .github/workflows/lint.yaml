@@ -30,7 +30,7 @@ jobs:
       - id: 'checks'
         run: >-
           echo "checks=$(jq --compact-output '[.scripts | keys[] | select(test("^lint:[^:]+$") and . != "lint:fix") |
-          ltrimstr("lint:")]' package.json)" >> "$GITHUB_OUTPUT"
+          ltrimstr("lint:")]' package.json)" >> "${GITHUB_OUTPUT}"
 
   lint:
     name: '${{ matrix.check }}'
