@@ -5,6 +5,9 @@ import type { Project } from '../src/project.ts';
 const OWNER = 'spence-com-au';
 const SITE_REPO = `${OWNER}.github.io`;
 
+/** Where a repo without a site commits the manifest that describes it, pointing at an icon wherever it keeps one. */
+const COMMITTED_MANIFEST = '.github/manifest.webmanifest';
+
 /** The fields of GitHub's repository object this reads. */
 interface Repo {
   name: string;
@@ -28,6 +31,12 @@ interface ManifestIcon {
   sizes?: string;
   type?: string;
   purpose?: string;
+}
+
+/** The fields of GitHub's content object, for a file, this reads. */
+interface Content {
+  content: string;
+  download_url: string;
 }
 
 /** The fields of GitHub's release object this reads. */
@@ -98,7 +107,7 @@ async function get(url: URL): Promise<Response> {
  * The manifest a site's page links, with the URL its own links resolve against, or nothing for a page that has none —
  * including one Pages does not serve yet, which answers 404.
  */
-async function readManifest(site: URL): Promise<{ manifest: Manifest; url: URL } | null> {
+async function readSiteManifest(site: URL): Promise<{ manifest: Manifest; url: URL } | null> {
   const page = await get(site);
   const href =
     page.ok &&
@@ -117,13 +126,37 @@ async function readManifest(site: URL): Promise<{ manifest: Manifest; url: URL }
     throw new Error(`Fetching ${url} failed: ${res.status}`);
   }
 
-  // Read outside the `try`, so that only a parse failure is reported as not JSON and a dropped connection as itself.
-  const body = await res.text();
+  return { manifest: parseManifest(await res.text(), url), url };
+}
 
+/**
+ * The manifest a repo commits at `COMMITTED_MANIFEST` on its default branch, with the URL GitHub serves it from, which
+ * its icons resolve against, or nothing for a repo that commits none.
+ */
+async function readCommittedManifest(repo: Repo): Promise<{ manifest: Manifest; url: URL } | null> {
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${repo.name}/contents/${COMMITTED_MANIFEST}`, {
+    headers: githubHeaders(),
+  });
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error(`Reading the manifest of ${repo.name} failed: ${res.status} ${await res.text()}`);
+  }
+
+  const { content, download_url } = (await res.json()) as Content;
+  const url = new URL(download_url);
+
+  return { manifest: parseManifest(Buffer.from(content, 'base64').toString(), url), url };
+}
+
+function parseManifest(body: string, url: URL): Manifest {
   try {
-    return { manifest: JSON.parse(body) as Manifest, url };
+    return JSON.parse(body) as Manifest;
   } catch (cause) {
-    throw new Error(`Fetching ${url} failed: not JSON`, { cause });
+    throw new Error(`${url} is not JSON`, { cause });
   }
 }
 
@@ -171,14 +204,15 @@ async function findApk(repo: Repo): Promise<Project['apk']> {
 
 async function toProject(domain: string, repo: Repo): Promise<Project> {
   const site = repo.has_pages ? new URL(`https://${domain}/${repo.name}/`) : null;
-  const { manifest, url } = (site && (await readManifest(site))) ?? { manifest: {}, url: null };
+  const found = await (site ? readSiteManifest(site) : readCommittedManifest(repo));
+  const { manifest, url } = found ?? { manifest: {}, url: null };
   const icon = url && pickIcon(manifest.icons ?? []);
 
   // A repo with a site is opened there, so only one without needs a release to link instead.
   const apk = site ? null : await findApk(repo);
 
   return {
-    // The short name is the label a site's author chose for a launcher's icon, which is what this page is.
+    // The short name is the label a manifest's author chose for a launcher's icon, which is what this page is.
     title:
       manifest.short_name || manifest.name || repo.name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
     description: manifest.description || repo.description,

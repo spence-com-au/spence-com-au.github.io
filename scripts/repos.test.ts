@@ -40,6 +40,21 @@ const site = (name: string, manifest: object) => ({
 
 const page = (name: string, html: string) => ({ [`https://${DOMAIN}/${name}/`]: () => new Response(html) });
 
+const contents = (name: string) =>
+  `https://api.github.com/repos/spence-com-au/${name}/contents/.github/manifest.webmanifest`;
+
+/** Where GitHub serves the files on a repo's default branch. */
+const raw = (name: string) => `https://raw.githubusercontent.com/spence-com-au/${name}/master`;
+
+/** A repo that commits `body` as its manifest, as GitHub's API returns the file. */
+const committed = (name: string, body: string) => ({
+  [contents(name)]: () =>
+    Response.json({
+      content: Buffer.from(body).toString('base64'),
+      download_url: `${raw(name)}/.github/manifest.webmanifest`,
+    }),
+});
+
 const releases = (name: string, body: object[] = []) => ({
   [`https://api.github.com/repos/spence-com-au/${name}/releases?per_page=100`]: () => Response.json(body),
 });
@@ -93,6 +108,45 @@ describe('listProjects', () => {
         },
       },
     ]);
+  });
+
+  it('describes a repo without a site from the manifest it commits, resolving its icons against it', async () => {
+    routes = {
+      ...repos(1, [repo('car-racer', { description: 'From GitHub' })]),
+      ...committed(
+        'car-racer',
+        JSON.stringify({
+          description: 'Race cars — fast',
+          icons: [{ src: '../Unity/Assets/CarRacer/Icon/icon-legacy.png', sizes: '432x432', type: 'image/png' }],
+        }),
+      ),
+      ...releases('car-racer'),
+    };
+
+    expect(await listProjects(DOMAIN)).toEqual([
+      {
+        title: 'Car Racer',
+        description: 'Race cars — fast',
+        site: null,
+        apk: null,
+        repo: 'https://github.com/spence-com-au/car-racer',
+        icon: `${raw('car-racer')}/Unity/Assets/CarRacer/Icon/icon-legacy.png`,
+        themeColor: null,
+      },
+    ]);
+  });
+
+  it.each([
+    [
+      'GitHub cannot read it',
+      { [contents('car-racer')]: () => new Response('rate limited', { status: 403 }) },
+      'Reading the manifest of car-racer failed: 403 rate limited',
+    ],
+    ['it is not JSON', committed('car-racer', '{'), `${raw('car-racer')}/.github/manifest.webmanifest is not JSON`],
+  ])('fails rather than strip a card when a repo commits a manifest and %s', async (_, manifest, message) => {
+    routes = { ...repos(1, [repo('car-racer')]), ...manifest, ...releases('car-racer') };
+
+    await expect(listProjects(DOMAIN)).rejects.toThrow(message);
   });
 
   it("fails when GitHub cannot list a repo's releases", async () => {
@@ -163,11 +217,11 @@ describe('listProjects', () => {
     ['omits', '', undefined],
   ])('%s the GitHub token when GITHUB_TOKEN is %j', async (_, token, authorization) => {
     vi.stubEnv('GITHUB_TOKEN', token);
-    routes = { ...repos(1, [repo('car-racer')]), ...releases('car-racer') };
+    routes = { ...repos(1, [repo('car-racer')]), ...committed('car-racer', '{}'), ...releases('car-racer') };
 
     await listProjects(DOMAIN);
 
-    // Every route, since the repo listing and the releases listing each build their own headers.
+    // Every route, since the listings of repos and of releases and the committed manifest each build their own headers.
     const calls = vi.mocked(fetch).mock.calls;
     expect(calls.map(([url]) => String(url))).toEqual(Object.keys(routes));
 
@@ -248,7 +302,7 @@ describe('listProjects', () => {
         ...page('dino-park', '<link rel="manifest" href="/dino-park/manifest.json">'),
         [`https://${DOMAIN}/dino-park/manifest.json`]: () => new Response('<html>Oops</html>'),
       },
-      `Fetching https://${DOMAIN}/dino-park/manifest.json failed: not JSON`,
+      `https://${DOMAIN}/dino-park/manifest.json is not JSON`,
     ],
     [
       'the connection drops while it reads the manifest',
