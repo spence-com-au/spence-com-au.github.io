@@ -32,12 +32,12 @@ const IMAGES = [
   },
 ];
 
-/** Fetches into `dir` each image it lacks or holds a different copy of, and writes none that fails its checksum. */
-export async function fetchImages(dir: string): Promise<void> {
+/** Fetches into `dir` each of `images` it lacks or holds a different copy of, writing none that fails its checksum. */
+export async function fetchImages(dir: string, images: typeof IMAGES = IMAGES): Promise<void> {
   await mkdir(dir, { recursive: true });
 
   await Promise.all(
-    IMAGES.map(async ({ file, url, sha256 }) => {
+    images.map(async ({ file, url, sha256 }) => {
       const path = `${dir}/${file}`;
       const cached = await readFile(path).catch(() => undefined);
 
