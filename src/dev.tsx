@@ -13,6 +13,6 @@ flushSync(() => {
   createRoot(document.getElementById('root') as HTMLElement).render(<App projects={projects} />);
 });
 
-connect(document.querySelector<HTMLButtonElement>('.scheme') as HTMLButtonElement);
-connectShell(document.querySelector<HTMLElement>('.shell') as HTMLElement);
+connect();
+connectShell();
 switchToDownloads();
