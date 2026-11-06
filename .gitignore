@@ -1,6 +1,6 @@
 # Build artefacts
-/repos.json
 /dist/
+/repos.json
 
 # Claude
 /.claude/worktrees/
