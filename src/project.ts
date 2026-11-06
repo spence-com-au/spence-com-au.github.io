@@ -27,6 +27,6 @@ export interface Project {
 export function initials(title: string): string {
   return title
     .split(' ')
-    .map((word) => [...word][0])
+    .map((word) => word[0])
     .join('');
 }

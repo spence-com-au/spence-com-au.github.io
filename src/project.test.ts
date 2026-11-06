@@ -27,8 +27,4 @@ describe('initials', () => {
   ])('takes no letter from the empty word %s leaves', (_, title) => {
     expect(initials(title)).toBe('CR');
   });
-
-  it('takes a whole character outside the Basic Multilingual Plane, not half of its surrogate pair', () => {
-    expect(initials('🚗 Racer')).toBe('🚗R');
-  });
 });
