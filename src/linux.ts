@@ -116,6 +116,7 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
     // An emulator that failed before building its machine throws on being destroyed too, which says nothing the first
     // failure did not.
     created?.destroy().catch(() => undefined);
+
     fit.disconnect();
     terminal.dispose();
     throw error;
