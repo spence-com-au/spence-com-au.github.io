@@ -2,7 +2,7 @@
 /repos.json
 /_site/
 /_fixture-site/
-/.ssr/
+/.ssr-*/
 
 # Claude
 /.claude/worktrees/
