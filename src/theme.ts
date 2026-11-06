@@ -11,8 +11,10 @@ export const BACKGROUNDS = { light: '#f4efe6', dark: '#1d1b19' };
  * is none to take. WCAG asks 3:1 of a component's boundary against what surrounds it, and a theme colour picked for a
  * browser's toolbar often falls short, so one that does is darkened on a light background, or lightened on a dark one,
  * until it reaches it. Lightness alone changes, in OKLCH, so the shade keeps the hue a site is known by. It comes back
- * as hex even when unchanged, since culori accepts strings CSS does not, such as a bare `3f9b4f`, and a colour outside
- * sRGB, which hex cannot hold, is brought inside it first, so that the contrast checked is the one returned.
+ * as hex even when unchanged, since culori accepts strings CSS does not, such as a bare `3f9b4f`, and it is that hex
+ * whose contrast is checked, as rounding a shade to 8 bits a channel can take it back below 3:1. A colour outside sRGB,
+ * which hex cannot hold, is brought inside it first by lowering its chroma, which keeps the hue that clipping it
+ * channel by channel would shift.
  */
 export function tint(themeColor: string | null, background: string): string | undefined {
   const color = themeColor && oklch(themeColor);
@@ -24,7 +26,7 @@ export function tint(themeColor: string | null, background: string): string | un
   const step = (oklch(background)?.l ?? 1) < 0.5 ? 0.01 : -0.01;
   let shade = clampChroma(color, 'oklch');
 
-  while (wcagContrast(shade, background) < 3) {
+  while (wcagContrast(formatHex(shade), background) < 3) {
     shade = clampChroma({ ...shade, l: shade.l + step }, 'oklch');
   }
 

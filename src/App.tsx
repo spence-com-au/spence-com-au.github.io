@@ -81,7 +81,7 @@ function Card({ project }: { project: Project }) {
       {icon ? (
         <img className="tile" src={icon} alt="" />
       ) : (
-        <span className="tile" aria-hidden="true" style={{ '--letters': monogram.length } as CSSProperties}>
+        <span className="tile" aria-hidden="true" style={{ '--letters': [...monogram].length } as CSSProperties}>
           {monogram}
         </span>
       )}

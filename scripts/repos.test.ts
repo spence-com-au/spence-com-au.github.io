@@ -136,6 +136,16 @@ describe('listProjects', () => {
     ]);
   });
 
+  it('reads a committed manifest that starts with a byte order mark, as a browser would', async () => {
+    routes = {
+      ...repos(1, [repo('car-racer')]),
+      ...committed('car-racer', `\uFEFF${JSON.stringify({ description: 'Race cars' })}`),
+      ...releases('car-racer'),
+    };
+
+    expect(await listProjects(DOMAIN)).toMatchObject([{ description: 'Race cars' }]);
+  });
+
   it.each([
     [
       'GitHub cannot read it',
@@ -214,19 +224,31 @@ describe('listProjects', () => {
 
   it.each([
     ['sends', 'secret', 'Bearer secret'],
-    ['omits', '', undefined],
+    ['omits', '', null],
   ])('%s the GitHub token when GITHUB_TOKEN is %j', async (_, token, authorization) => {
     vi.stubEnv('GITHUB_TOKEN', token);
-    routes = { ...repos(1, [repo('car-racer')]), ...committed('car-racer', '{}'), ...releases('car-racer') };
+    routes = {
+      ...repos(1, [repo('car-racer'), repo('dino-park', { has_pages: true })]),
+      ...committed('car-racer', '{}'),
+      ...releases('car-racer'),
+
+      // A manifest's `href` can name any host.
+      ...page('dino-park', '<link rel="manifest" href="https://cdn.test/manifest.webmanifest">'),
+      'https://cdn.test/manifest.webmanifest': () => Response.json({}),
+    };
 
     await listProjects(DOMAIN);
 
     // Every route, since the listings of repos and of releases and the committed manifest each build their own headers.
+    // The requests of different repos interleave, so only the set of them is pinned.
     const calls = vi.mocked(fetch).mock.calls;
-    expect(calls.map(([url]) => String(url))).toEqual(Object.keys(routes));
+    expect(calls.map(([url]) => String(url)).toSorted()).toEqual(Object.keys(routes).toSorted());
 
-    for (const [, init] of calls) {
-      expect((init as { headers: Record<string, string> }).headers.Authorization).toBe(authorization);
+    // The token is GitHub's alone: the site and the manifest it links are not GitHub's, and must not see it.
+    for (const [url, init] of calls) {
+      const sent = new Headers(init?.headers).get('Authorization');
+
+      expect(sent, String(url)).toBe(new URL(String(url)).host === 'api.github.com' ? authorization : null);
     }
   });
 

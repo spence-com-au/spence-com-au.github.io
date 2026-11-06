@@ -1,10 +1,12 @@
-// Linux in [v86](https://github.com/copy/v86), an x86 emulator compiled to WebAssembly, on a terminal drawn by xterm.js.
-// Only `src/shell.ts` imports it, once the Terminal card is opened, so the page itself ships none of it.
+// Linux in [v86](https://github.com/copy/v86), an x86 emulator compiled to WebAssembly, on a terminal drawn by
+// xterm.js. Only `src/shell.ts` imports it, once the Terminal card is opened, so the page itself ships none of it.
 import '@xterm/xterm/css/xterm.css';
 
 import { Terminal } from '@xterm/xterm';
 import { V86 } from 'v86';
 import wasm from 'v86/build/v86.wasm?url';
+
+import { DIR, FILES } from './v86.ts';
 
 /**
  * Wires a terminal in `screen`, in the font and colours it is styled in, to the serial port of an emulator booting the
@@ -35,9 +37,9 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
 
   fit.observe(screen);
 
-  // The emulator and its images are fetched here rather than by v86, which only logs a missing file and retries a failed
-  // one forever, so a failure could never surface. Megabytes, so the wait shows on the screen it is for, on one line
-  // rewritten as it counts up.
+  // The emulator and its images are fetched here rather than by v86, which only logs a missing file and retries a
+  // failed one forever, so a failure could never surface. Megabytes, so the wait shows on the screen it is for, on one
+  // line rewritten as it counts up.
   let loaded = 0;
 
   async function download(url: string): Promise<ArrayBuffer> {
@@ -60,12 +62,12 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
   }
 
   async function load() {
-    const image = async (file: string) => ({ buffer: await download(`/v86/${file}`) });
+    const image = async (file: string) => ({ buffer: await download(`/${DIR}/${file}`) });
     const [code, bios, vga_bios, bzimage] = await Promise.all([
       download(wasm),
-      image('seabios.bin'),
-      image('vgabios.bin'),
-      image('buildroot-bzimage68.bin'),
+      image(FILES.bios),
+      image(FILES.vga_bios),
+      image(FILES.bzimage),
     ]);
 
     // Compiled here too, so that a file that is not WebAssembly fails here rather than inside v86.
@@ -116,6 +118,7 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
     // An emulator that failed before building its machine throws on being destroyed too, which says nothing the first
     // failure did not.
     created?.destroy().catch(() => undefined);
+
     fit.disconnect();
     terminal.dispose();
     throw error;

@@ -5,6 +5,7 @@ import { parse } from 'node-html-parser';
 import projects from '../../fixtures/repos.json' with { type: 'json' };
 import { initials } from '../../src/project.ts';
 import { BACKGROUNDS, tint } from '../../src/theme.ts';
+import { DIR, FILES } from '../../src/v86.ts';
 
 type Project = (typeof projects)[number];
 
@@ -64,6 +65,8 @@ test('prerenders a card for every repo', async ({ page }) => {
 
     if (project.description) {
       await expect(card.getByText(project.description)).toBeVisible();
+    } else {
+      await expect(card.locator('p')).toHaveCount(0);
     }
   }
 });
@@ -71,8 +74,8 @@ test('prerenders a card for every repo', async ({ page }) => {
 // `scripts/build.ts` splices the cards into the page with `String.replace`, which reads a `$&`, `` $` `` or `$'` in a
 // replacement string as a pattern for part of the page.
 test('shows the replacement patterns in a description as written', async ({ page }) => {
-  const { title, description } = find('with a `$&` in its description', (p): p is Project =>
-    p.description.includes('$&'),
+  const { title, description } = find('with a `$&` in its description', (p): p is Project & { description: string } =>
+    Boolean(p.description?.includes('$&')),
   );
 
   await expect(cardOf(page, title)).toContainText(description);
@@ -92,7 +95,7 @@ for (const [name, { viewport }] of [
   test(`fits three initials in a tile on ${name}`, async ({ page }) => {
     const { title } = find(
       'without an icon, of three initials',
-      (p): p is Project => !p.icon && initials(p.title).length === 3,
+      (p): p is Project => !p.icon && [...initials(p.title)].length === 3,
     );
 
     await page.setViewportSize(viewport);
@@ -380,9 +383,9 @@ test.describe('with scripts on', () => {
   for (const { name, glob, answer, says } of [
     {
       name: 'a missing kernel',
-      glob: '**/v86/buildroot-bzimage68.bin',
+      glob: `**/${DIR}/${FILES.bzimage}`,
       answer: { status: 404 },
-      says: /Fetching buildroot-bzimage68\.bin failed: 404/,
+      says: `Fetching ${FILES.bzimage} failed: 404`,
     },
     {
       name: 'a missing emulator',
@@ -472,8 +475,71 @@ test.describe('with scripts on', () => {
     await expect(screen).not.toContainText('`');
   });
 
+  // The images load together and the shell boots only once all have, so holding the kernel back keeps the Terminal
+  // loading for as long as a test needs. Returns what lets it go.
+  async function holdKernel(page: Page): Promise<() => void> {
+    let release!: () => void;
+    const released = new Promise((resolve) => {
+      release = () => resolve(undefined);
+    });
+
+    await page.route('**/v86/buildroot-bzimage68.bin', async (route) => {
+      await released;
+      await route.continue();
+    });
+
+    return release;
+  }
+
+  test('boots a shell in the Terminal closed and opened again while it loads', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const dialog = page.getByRole('dialog', { name: 'Terminal' });
+    const screen = dialog.locator('.xterm-rows');
+    const open = page.getByRole('button', { name: 'Terminal', exact: true });
+    const release = await holdKernel(page);
+
+    await open.click();
+    await expect(dialog).toContainText('Fetching Linux');
+    await dialog.getByRole('button', { name: 'Close terminal' }).click();
+    await open.click();
+    release();
+
+    // Started for the first opening, stopped for the closing and started again for the second, which is the one that
+    // counts: the shell must be left running and taking input, not stopped by the closing between them.
+    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
+    await page.keyboard.type('uname -s\n');
+    await expect(screen.getByText('Linux', { exact: true })).toBeVisible();
+  });
+
+  test('leaves the Terminal closed while it loads unfocused, and boots it when opened again', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const dialog = page.locator('.shell dialog');
+    const screen = dialog.locator('.xterm-rows');
+    const release = await holdKernel(page);
+
+    // Drawn though closed. A hidden terminal renders nothing, so would never show that the images have loaded, and the
+    // browser ignores a focus given to it, which is the one a start would take.
+    await page.addStyleTag({ content: '.shell dialog:not([open]) { display: flex; pointer-events: none; }' });
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(screen).toContainText('Fetching Linux');
+    await dialog.getByRole('button', { name: 'Close terminal' }).click();
+    await expect(dialog).not.toHaveAttribute('open');
+    release();
+
+    // The line the emulator clears once it has loaded.
+    await expect(screen).not.toContainText('Fetching Linux');
+    await expect(dialog.locator('.xterm-helper-textarea')).not.toBeFocused();
+
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
+  });
+
   // Dispatched rather than typed, since Playwright types as a US layout does and most of these stand for other layouts'
-  // keys. Ctrl with a backtick, which it could type, is beside them as a modifier that must not count.
+  // keys. Ctrl and Meta with a backtick, which it could type, are beside them as modifiers that must not count.
   for (const { name, init, opens } of [
     {
       name: 'a backtick typed with AltGr',
@@ -483,6 +549,7 @@ test.describe('with scripts on', () => {
     { name: 'a backtick typed with Option', init: { key: '`', altKey: true }, opens: true },
     { name: 'a dead key, even the one marked with a backtick', init: { key: 'Dead', code: 'Backquote' }, opens: false },
     { name: 'Ctrl and a backtick', init: { key: '`', ctrlKey: true }, opens: false },
+    { name: 'Cmd and a backtick', init: { key: '`', metaKey: true }, opens: false },
   ]) {
     test(`${opens ? 'opens' : 'leaves closed'} the Terminal on ${name}`, async ({ page }) => {
       await page.evaluate(

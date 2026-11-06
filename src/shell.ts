@@ -1,5 +1,5 @@
-// The Terminal card, which opens a shell on Linux in a dialog. The emulator and the images it boots come to megabytes, so
-// they load only once the card is first opened, and the emulator runs only while the dialog is open.
+// The Terminal card, which opens a shell on Linux in a dialog. The emulator and the images it boots come to megabytes,
+// so they load only once the card is first opened, and the emulator runs only while the dialog is open.
 import type { boot } from './linux.ts';
 
 type Linux = Awaited<ReturnType<typeof boot>>;
@@ -18,7 +18,9 @@ export function connect(card: HTMLElement): void {
 
     function fail(error: unknown, advice: string): undefined {
       linux = undefined;
-      screen.textContent = `${error instanceof Error ? error.message : String(error)}. ${advice}`;
+      const reason = error instanceof Error ? error.message : String(error);
+
+      screen.textContent = `${reason}. ${advice}`;
 
       return undefined;
     }
@@ -49,9 +51,9 @@ export function connect(card: HTMLElement): void {
   // closing from the shell works, at the cost of the shell never receiving one: `$(…)` substitutes a command instead.
   //
   // Alt counts, as Option on a Mac and AltGr elsewhere type the backtick on some layouts, and so does the Ctrl that
-  // Windows reports alongside AltGr. Ctrl and Meta otherwise do not, being the browser's and the system's own shortcuts.
-  // A layout where the backtick is a dead key does not count either: that keydown names no character, only `Dead`,
-  // which a dead key for any other accent names alike.
+  // Windows reports alongside AltGr. Ctrl and Meta otherwise do not, being the browser's and the system's own
+  // shortcuts. A layout where the backtick is a dead key does not count either: that keydown names no character, only
+  // `Dead`, which a dead key for any other accent names alike.
   addEventListener(
     'keydown',
     (event) => {
