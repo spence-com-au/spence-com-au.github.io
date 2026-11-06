@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import { fetchImages } from './scripts/v86.ts';
+import { DIR } from './src/v86.ts';
 
 export default defineConfig({
   build: {
@@ -27,7 +28,7 @@ export default defineConfig({
     {
       name: 'v86-images',
       apply: (_, { mode }) => mode !== 'test',
-      buildStart: () => fetchImages(`${import.meta.dirname}/public/v86`),
+      buildStart: () => fetchImages(`${import.meta.dirname}/public/${DIR}`),
     },
   ],
   test: {

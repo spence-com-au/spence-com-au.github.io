@@ -6,6 +6,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 import v86 from 'v86/package.json' with { type: 'json' };
 
+import { FILES } from '../src/v86.ts';
+
 const digest = (data: Uint8Array) => createHash('sha256').update(data).digest('hex');
 
 // The BIOS from the commit the installed emulator was built from, which its version names after `+g`, so that an update
@@ -14,20 +16,20 @@ const commit = v86.version.split('+g')[1];
 
 const IMAGES = [
   {
-    file: 'seabios.bin',
-    url: `https://raw.githubusercontent.com/copy/v86/${commit}/bios/seabios.bin`,
+    file: FILES.bios,
+    url: `https://raw.githubusercontent.com/copy/v86/${commit}/bios/${FILES.bios}`,
     sha256: '73e3f359102e3a9982c35fce98eb7cd08f18303ac7f1ba6ebfbe6cdc1c244d98',
   },
   {
-    file: 'vgabios.bin',
-    url: `https://raw.githubusercontent.com/copy/v86/${commit}/bios/vgabios.bin`,
+    file: FILES.vga_bios,
+    url: `https://raw.githubusercontent.com/copy/v86/${commit}/bios/${FILES.vga_bios}`,
     sha256: 'a4bc0d80cc3ca028c73dafa8fee396b8d054ce87ebd8abfbd31b06b437607880',
   },
 
   // Linux 6.8 with BusyBox, built with Buildroot for v86's own demo at https://copy.sh/v86/?profile=buildroot.
   {
-    file: 'buildroot-bzimage68.bin',
-    url: 'https://i.copy.sh/buildroot-bzimage68.bin',
+    file: FILES.bzimage,
+    url: `https://i.copy.sh/${FILES.bzimage}`,
     sha256: '507a759c70ab7a490a233be454d0b5b88bc667956a410b531cb4edc091e2eb1c',
   },
 ];

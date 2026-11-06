@@ -6,6 +6,8 @@ import { Terminal } from '@xterm/xterm';
 import { V86 } from 'v86';
 import wasm from 'v86/build/v86.wasm?url';
 
+import { DIR, FILES } from './v86.ts';
+
 /**
  * Wires a terminal in `screen`, in the font and colours it is styled in, to the serial port of an emulator booting the
  * images `scripts/v86.ts` fetches, and resolves once they have loaded. Left to the caller to start, as the dialog the
@@ -60,12 +62,12 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
   }
 
   async function load() {
-    const image = async (file: string) => ({ buffer: await download(`/v86/${file}`) });
+    const image = async (file: string) => ({ buffer: await download(`/${DIR}/${file}`) });
     const [code, bios, vga_bios, bzimage] = await Promise.all([
       download(wasm),
-      image('seabios.bin'),
-      image('vgabios.bin'),
-      image('buildroot-bzimage68.bin'),
+      image(FILES.bios),
+      image(FILES.vga_bios),
+      image(FILES.bzimage),
     ]);
 
     // Compiled here too, so that a file that is not WebAssembly fails here rather than inside v86.

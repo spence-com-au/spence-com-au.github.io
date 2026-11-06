@@ -5,6 +5,7 @@ import { parse } from 'node-html-parser';
 import projects from '../../fixtures/repos.json' with { type: 'json' };
 import { initials } from '../../src/project.ts';
 import { BACKGROUNDS, tint } from '../../src/theme.ts';
+import { DIR, FILES } from '../../src/v86.ts';
 
 type Project = (typeof projects)[number];
 
@@ -380,9 +381,9 @@ test.describe('with scripts on', () => {
   for (const { name, glob, answer, says } of [
     {
       name: 'a missing kernel',
-      glob: '**/v86/buildroot-bzimage68.bin',
+      glob: `**/${DIR}/${FILES.bzimage}`,
       answer: { status: 404 },
-      says: /Fetching buildroot-bzimage68\.bin failed: 404/,
+      says: `Fetching ${FILES.bzimage} failed: 404`,
     },
     {
       name: 'a missing emulator',
