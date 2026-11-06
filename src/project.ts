@@ -23,10 +23,13 @@ export interface Project {
   themeColor: string | null;
 }
 
-/** What a card without an icon shows in its place: the first letter of each word of its title. */
+/**
+ * What a card without an icon shows in its place: the first letter of each word of its title, taken by code point
+ * rather than by UTF-16 unit so that an emoji is not cut in half.
+ */
 export function initials(title: string): string {
   return title
     .split(' ')
-    .map((word) => word[0])
+    .map((word) => [...word][0])
     .join('');
 }

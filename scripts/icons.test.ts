@@ -27,13 +27,23 @@ describe('drawIcon', () => {
   );
 
   test.each(ICONS.filter((icon) => icon.plate === 'circle'))(
-    '$file is opaque at the centre and transparent in the corners',
+    '$file is opaque from the centre to the middle of each edge and transparent in the corners',
     async (icon) => {
       const alpha = await drawAlpha(icon);
       const alphaAt = (x: number, y: number) => alpha[y * icon.size + x];
+      const middle = icon.size / 2;
       const last = icon.size - 1;
 
-      expect(alphaAt(icon.size / 2, icon.size / 2)).toBe(255);
+      // The circle spans the full width, so a pixel in from the middle of an edge is on the plate whatever its colour.
+      for (const [x, y] of [
+        [middle, middle],
+        [1, middle],
+        [middle, 1],
+        [last - 1, middle],
+        [middle, last - 1],
+      ] as const) {
+        expect(alphaAt(x, y)).toBe(255);
+      }
 
       for (const [x, y] of [
         [0, 0],
@@ -63,7 +73,9 @@ describe('drawIcon', () => {
       }
     }
 
-    expect(farthest).toBeGreaterThan(0);
+    // The lower bound is a point under the 37% that `INSET_SCALE` aims for, so the artwork is not shrunk further than
+    // it needs to be.
+    expect(farthest / icon.size).toBeGreaterThanOrEqual(0.36);
     expect(farthest / icon.size).toBeLessThanOrEqual(0.4);
   });
 });

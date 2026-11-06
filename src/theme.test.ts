@@ -30,6 +30,14 @@ describe.each(Object.entries(BACKGROUNDS))('tint against the %s background', (sc
     },
   );
 
+  // Each is adjusted to a shade that passes 3:1, and fails it once `formatHex` rounds it to 8 bits a channel.
+  it.each(scheme === 'light' ? ['#0096d7'] : ['#000582'])(
+    'keeps %s standing out once rounded to the hex it returns',
+    (themeColor) => {
+      expect(wcagContrast(tint(themeColor, background) ?? '', background)).toBeGreaterThanOrEqual(3);
+    },
+  );
+
   it.each([
     ['not a colour', 'nonsense'],
     ['missing', null],

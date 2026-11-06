@@ -59,7 +59,7 @@
   },
   {
     "title": "Weather Station",
-    "description": "Readings from a backyard weather station.",
+    "description": null,
     "site": null,
     "apk": null,
     "repo": "https://github.com/spence-com-au/weather-station",
