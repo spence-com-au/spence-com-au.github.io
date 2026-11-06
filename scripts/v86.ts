@@ -1,6 +1,6 @@
-// The firmware and kernel that the Terminal card boots in v86, which its npm package leaves out. `vite.config.ts` fetches
-// them into `public/v86/` for Vite to serve and build into the site, each held to a checksum, since the kernel's URL
-// names no version and a different file could be served under it.
+// The firmware and kernel that the Terminal card boots in v86, which its npm package leaves out. `vite.config.ts`
+// fetches them into `public/v86/` for Vite to serve and build into the site, each held to a checksum, since the
+// kernel's URL names no version and a different file could be served under it.
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
