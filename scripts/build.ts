@@ -33,7 +33,8 @@ await build({
   ],
 });
 
-await build({ build: { ssr: 'src/server.tsx', outDir: SSR_OUT } });
+// Only imported below and then removed, so the public directory, kernel and all, is not worth copying into it.
+await build({ build: { ssr: 'src/server.tsx', outDir: SSR_OUT, copyPublicDir: false } });
 
 const { render } = (await import(pathToFileURL(`${SSR_OUT}/server.js`).href)) as typeof import('../src/server.tsx');
 const page = await readFile(`${outDir}/index.html`, 'utf8');
