@@ -136,6 +136,16 @@ describe('listProjects', () => {
     ]);
   });
 
+  it('reads a committed manifest that starts with a byte order mark, as a browser would', async () => {
+    routes = {
+      ...repos(1, [repo('car-racer')]),
+      ...committed('car-racer', `\uFEFF${JSON.stringify({ description: 'Race cars' })}`),
+      ...releases('car-racer'),
+    };
+
+    expect(await listProjects(DOMAIN)).toMatchObject([{ description: 'Race cars' }]);
+  });
+
   it.each([
     [
       'GitHub cannot read it',
