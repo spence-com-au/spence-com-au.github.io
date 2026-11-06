@@ -12,11 +12,6 @@ updates:
     schedule:
       interval: 'weekly'
 
-    # pnpm 12 refuses a release younger than its default `minimumReleaseAge` of a day, so CI's `pnpm install` would fail
-    # on any update Dependabot proposes sooner than that.
-    cooldown:
-      default-days: 1
-
     # `@types/node` describes one Node major version, so it follows `devEngines.runtime.version` in `package.json`
     # rather than the newest release: a later major types APIs the runtime lacks, and CI passes regardless.
     ignore:
