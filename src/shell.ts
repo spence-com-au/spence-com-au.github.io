@@ -5,7 +5,13 @@ import type { boot } from './linux.ts';
 type Linux = Awaited<ReturnType<typeof boot>>;
 
 /** Shows the card and answers it. Called here on the built page, and by `src/dev.tsx` once React has rendered it. */
-export function connect(card: HTMLElement): void {
+export function connect(): void {
+  const card = document.querySelector<HTMLElement>('.shell');
+
+  if (!card) {
+    return;
+  }
+
   const dialog = card.querySelector('dialog') as HTMLDialogElement;
   const screen = dialog.querySelector('.screen') as HTMLElement;
   let linux: Promise<Linux | undefined> | undefined;
@@ -82,8 +88,4 @@ export function connect(card: HTMLElement): void {
   });
 }
 
-const card = document.querySelector<HTMLElement>('.shell');
-
-if (card) {
-  connect(card);
-}
+connect();

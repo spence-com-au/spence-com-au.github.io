@@ -8,10 +8,16 @@ function isDark(): boolean {
 }
 
 /** Shows the switch and answers it. Called here on the built page, and by `src/dev.tsx` once React has rendered it. */
-export function connect(button: HTMLButtonElement): void {
+export function connect(): void {
+  const button = document.querySelector<HTMLButtonElement>('.scheme');
+
+  if (!button) {
+    return;
+  }
+
   // Once a scheme is chosen, the browser's toolbar takes the page's background, read back from it; until then the
   // `theme-color` metas in `index.html` apply.
-  function sync(): void {
+  const sync = (): void => {
     button.setAttribute('aria-pressed', String(isDark()));
 
     if (root.dataset.scheme) {
@@ -21,7 +27,7 @@ export function connect(button: HTMLButtonElement): void {
         meta.setAttribute('content', background);
       }
     }
-  }
+  };
 
   button.hidden = false;
   button.addEventListener('click', () => {
@@ -40,8 +46,4 @@ export function connect(button: HTMLButtonElement): void {
   sync();
 }
 
-const button = document.querySelector<HTMLButtonElement>('.scheme');
-
-if (button) {
-  connect(button);
-}
+connect();
