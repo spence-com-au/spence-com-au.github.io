@@ -1,16 +1,14 @@
 // Build the site into Vite's `build.outDir`, or the `--outDir` given as `vite build` takes it: Vite bundles the page's
 // assets, then React prerenders the cards into it from the `repos.json` that `pnpm fetch:repos` writes, or from the
 // file named on the command line, such as the tests' fixture.
-import { readFile, rm, writeFile } from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
+import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 
-import { build } from 'vite';
+import { build, runnerImport } from 'vite';
 
 import type { Project } from '../src/project.ts';
 import { readFavicon, renderIcon, SITE_ICONS } from './icons.ts';
 
-const SSR_OUT = '.ssr';
 const PLACEHOLDER = '<!--app-->';
 
 const { positionals, values } = parseArgs({ allowPositionals: true, options: { outDir: { type: 'string' } } });
@@ -33,10 +31,10 @@ await build({
   ],
 });
 
-// Only imported below and then removed, so the public directory, kernel and all, is not worth copying into it.
-await build({ build: { ssr: 'src/server.tsx', outDir: SSR_OUT, copyPublicDir: false } });
+// Through Vite, which compiles the `.tsx` that Node cannot load, and in memory rather than into a bundle on disk. It
+// reads no `vite.config.ts`, so none of the site's plugins run for it.
+const { render } = (await runnerImport<typeof import('../src/server.tsx')>('src/server.tsx')).module;
 
-const { render } = (await import(pathToFileURL(`${SSR_OUT}/server.js`).href)) as typeof import('../src/server.tsx');
 const page = await readFile(`${outDir}/index.html`, 'utf8');
 
 if (!page.includes(PLACEHOLDER)) {
@@ -51,7 +49,6 @@ await writeFile(
   page.replace(PLACEHOLDER, () => app),
 );
 
-await rm(SSR_OUT, { recursive: true });
 console.log(`Rendered ${projects.length} repos`);
 
 const favicon = await readFavicon();
