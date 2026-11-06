@@ -95,7 +95,7 @@ for (const [name, { viewport }] of [
   test(`fits three initials in a tile on ${name}`, async ({ page }) => {
     const { title } = find(
       'without an icon, of three initials',
-      (p): p is Project => !p.icon && initials(p.title).length === 3,
+      (p): p is Project => !p.icon && [...initials(p.title)].length === 3,
     );
 
     await page.setViewportSize(viewport);
