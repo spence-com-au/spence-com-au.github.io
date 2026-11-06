@@ -377,6 +377,23 @@ test.describe('with scripts on', () => {
     await expect(page.getByRole('listitem').getByRole('heading')).toHaveText(titles);
   });
 
+  // Linux takes seconds to boot in an emulator, more on a slow runner, so a test that boots it waits that long for the
+  // prompt and is given as long again for the rest.
+  const PROMPT_TIMEOUT = 30_000;
+  const BOOT_TEST_TIMEOUT = 2 * PROMPT_TIMEOUT;
+
+  const terminalOf = (page: Page) => {
+    const dialog = page.getByRole('dialog', { name: 'Terminal' });
+    const screen = dialog.locator('.xterm-rows');
+
+    return {
+      button: page.getByRole('button', { name: 'Terminal', exact: true }),
+      dialog,
+      screen,
+      prompt: () => expect(screen).toContainText('~% ', { timeout: PROMPT_TIMEOUT }),
+    };
+  };
+
   // A file missing, as after a deploy that lacks it, the emulator's WebAssembly answered with a page, as the preview
   // server answers a path it lacks, or a module v86 fails to start, each of which would otherwise leave the terminal
   // waiting for ever. Unhandled, the rejection would surface only as a page error.
@@ -407,21 +424,21 @@ test.describe('with scripts on', () => {
     },
   ]) {
     test(`says why the Terminal could not boot from ${name}, and tries again when opened again`, async ({ page }) => {
-      test.setTimeout(60_000);
+      test.setTimeout(BOOT_TEST_TIMEOUT);
 
       const errors: Error[] = [];
-      const dialog = page.getByRole('dialog', { name: 'Terminal' });
+      const { button, dialog, prompt } = terminalOf(page);
 
       page.on('pageerror', (error) => errors.push(error));
       await page.route(glob, (route) => route.fulfill(answer));
-      await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+      await button.click();
       await expect(dialog).toContainText(says);
       await expect(dialog).toContainText('Close and open it to try again.');
       await dialog.getByRole('button', { name: 'Close terminal' }).click();
 
       await page.unroute(glob);
-      await page.getByRole('button', { name: 'Terminal', exact: true }).click();
-      await expect(dialog.locator('.xterm-rows')).toContainText('~% ', { timeout: 30_000 });
+      await button.click();
+      await prompt();
       await expect(dialog).not.toContainText('try again');
       expect(errors).toEqual([]);
     });
@@ -448,14 +465,13 @@ test.describe('with scripts on', () => {
   });
 
   test('opens and closes the Terminal on a backtick, which the shell never receives', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(BOOT_TEST_TIMEOUT);
 
-    const dialog = page.getByRole('dialog', { name: 'Terminal' });
-    const screen = dialog.locator('.xterm-rows');
+    const { button, dialog, screen, prompt } = terminalOf(page);
 
-    await expect(page.getByRole('button', { name: 'Terminal', exact: true })).toHaveAttribute('aria-keyshortcuts', '`');
+    await expect(button).toHaveAttribute('aria-keyshortcuts', '`');
     await page.keyboard.press('`');
-    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await prompt();
 
     // Closed from inside the shell, half way through a command, which carries on without the backtick once reopened.
     await page.keyboard.type('echo ok');
@@ -492,30 +508,29 @@ test.describe('with scripts on', () => {
   }
 
   test('boots a shell in the Terminal closed and opened again while it loads', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(BOOT_TEST_TIMEOUT);
 
-    const dialog = page.getByRole('dialog', { name: 'Terminal' });
-    const screen = dialog.locator('.xterm-rows');
-    const open = page.getByRole('button', { name: 'Terminal', exact: true });
+    const { button, dialog, screen, prompt } = terminalOf(page);
     const release = await holdKernel(page);
 
-    await open.click();
+    await button.click();
     await expect(dialog).toContainText('Fetching Linux');
     await dialog.getByRole('button', { name: 'Close terminal' }).click();
-    await open.click();
+    await button.click();
     release();
 
     // Started for the first opening, stopped for the closing and started again for the second, which is the one that
     // counts: the shell must be left running and taking input, not stopped by the closing between them.
-    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await prompt();
     await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
     await page.keyboard.type('uname -s\n');
     await expect(screen.getByText('Linux', { exact: true })).toBeVisible();
   });
 
   test('leaves the Terminal closed while it loads unfocused, and boots it when opened again', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(BOOT_TEST_TIMEOUT);
 
+    const { button, prompt } = terminalOf(page);
     const dialog = page.locator('.shell dialog');
     const screen = dialog.locator('.xterm-rows');
     const release = await holdKernel(page);
@@ -523,7 +538,7 @@ test.describe('with scripts on', () => {
     // Drawn though closed. A hidden terminal renders nothing, so would never show that the images have loaded, and the
     // browser ignores a focus given to it, which is the one a start would take.
     await page.addStyleTag({ content: '.shell dialog:not([open]) { display: flex; pointer-events: none; }' });
-    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await button.click();
     await expect(screen).toContainText('Fetching Linux');
     await dialog.getByRole('button', { name: 'Close terminal' }).click();
     await expect(dialog).not.toHaveAttribute('open');
@@ -533,8 +548,8 @@ test.describe('with scripts on', () => {
     await expect(screen).not.toContainText('Fetching Linux');
     await expect(dialog.locator('.xterm-helper-textarea')).not.toBeFocused();
 
-    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
-    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await button.click();
+    await prompt();
     await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
   });
 
@@ -561,15 +576,13 @@ test.describe('with scripts on', () => {
     });
   }
 
-  // Linux takes seconds to boot in an emulator, more on a slow runner.
   test('boots a shell in the Terminal card, which carries on where it left off when opened again', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(BOOT_TEST_TIMEOUT);
 
-    const dialog = page.getByRole('dialog', { name: 'Terminal' });
-    const screen = dialog.locator('.xterm-rows');
+    const { button, dialog, screen, prompt } = terminalOf(page);
 
-    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
-    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await button.click();
+    await prompt();
 
     // Dark on the light page, as a terminal is, in the colours xterm.js was given from the stylesheet.
     await expect(dialog.locator('.xterm-scrollable-element')).toHaveCSS(
@@ -611,7 +624,7 @@ test.describe('with scripts on', () => {
     await dialog.getByRole('button', { name: 'Close terminal' }).click();
     await expect(dialog).toBeHidden();
 
-    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await button.click();
     await expect(screen.getByText('woke-2', { exact: true })).toBeVisible();
     await page.keyboard.type('uname -s\n');
     await expect(screen).toContainText('BusyBox v1.');
