@@ -454,6 +454,69 @@ test.describe('with scripts on', () => {
     await expect(screen).not.toContainText('`');
   });
 
+  // The images load together and the shell boots only once all have, so holding the kernel back keeps the Terminal
+  // loading for as long as a test needs. Returns what lets it go.
+  async function holdKernel(page: Page): Promise<() => void> {
+    let release!: () => void;
+    const released = new Promise((resolve) => {
+      release = () => resolve(undefined);
+    });
+
+    await page.route('**/v86/buildroot-bzimage68.bin', async (route) => {
+      await released;
+      await route.continue();
+    });
+
+    return release;
+  }
+
+  test('boots a shell in the Terminal closed and opened again while it loads', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const dialog = page.getByRole('dialog', { name: 'Terminal' });
+    const screen = dialog.locator('.xterm-rows');
+    const open = page.getByRole('button', { name: 'Terminal', exact: true });
+    const release = await holdKernel(page);
+
+    await open.click();
+    await expect(dialog).toContainText('Fetching Linux');
+    await dialog.getByRole('button', { name: 'Close terminal' }).click();
+    await open.click();
+    release();
+
+    // Started for the first opening, stopped for the closing and started again for the second, which is the one that
+    // counts: the shell must be left running and taking input, not stopped by the closing between them.
+    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
+    await page.keyboard.type('uname -s\n');
+    await expect(screen.getByText('Linux', { exact: true })).toBeVisible();
+  });
+
+  test('leaves the Terminal closed while it loads unfocused, and boots it when opened again', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const dialog = page.locator('.shell dialog');
+    const screen = dialog.locator('.xterm-rows');
+    const release = await holdKernel(page);
+
+    // Drawn though closed. A hidden terminal renders nothing, so would never show that the images have loaded, and the
+    // browser ignores a focus given to it, which is the one a start would take.
+    await page.addStyleTag({ content: '.shell dialog:not([open]) { display: flex; pointer-events: none; }' });
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(screen).toContainText('Fetching Linux');
+    await dialog.getByRole('button', { name: 'Close terminal' }).click();
+    await expect(dialog).not.toHaveAttribute('open');
+    release();
+
+    // The line the emulator clears once it has loaded.
+    await expect(screen).not.toContainText('Fetching Linux');
+    await expect(dialog.locator('.xterm-helper-textarea')).not.toBeFocused();
+
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
+  });
+
   // Dispatched rather than typed, since Playwright types as a US layout does and most of these stand for other layouts'
   // keys. Ctrl and Meta with a backtick, which it could type, are beside them as modifiers that must not count.
   for (const { name, init, opens } of [
