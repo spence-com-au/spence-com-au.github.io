@@ -488,30 +488,29 @@ test.describe('with scripts on', () => {
   }
 
   test('boots a shell in the Terminal closed and opened again while it loads', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(BOOT_TEST_TIMEOUT);
 
-    const dialog = page.getByRole('dialog', { name: 'Terminal' });
-    const screen = dialog.locator('.xterm-rows');
-    const open = page.getByRole('button', { name: 'Terminal', exact: true });
+    const { button, dialog, screen, prompt } = terminalOf(page);
     const release = await holdKernel(page);
 
-    await open.click();
+    await button.click();
     await expect(dialog).toContainText('Fetching Linux');
     await dialog.getByRole('button', { name: 'Close terminal' }).click();
-    await open.click();
+    await button.click();
     release();
 
     // Started for the first opening, stopped for the closing and started again for the second, which is the one that
     // counts: the shell must be left running and taking input, not stopped by the closing between them.
-    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await prompt();
     await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
     await page.keyboard.type('uname -s\n');
     await expect(screen.getByText('Linux', { exact: true })).toBeVisible();
   });
 
   test('leaves the Terminal closed while it loads unfocused, and boots it when opened again', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(BOOT_TEST_TIMEOUT);
 
+    const { button, prompt } = terminalOf(page);
     const dialog = page.locator('.shell dialog');
     const screen = dialog.locator('.xterm-rows');
     const release = await holdKernel(page);
@@ -519,7 +518,7 @@ test.describe('with scripts on', () => {
     // Drawn though closed. A hidden terminal renders nothing, so would never show that the images have loaded, and the
     // browser ignores a focus given to it, which is the one a start would take.
     await page.addStyleTag({ content: '.shell dialog:not([open]) { display: flex; pointer-events: none; }' });
-    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await button.click();
     await expect(screen).toContainText('Fetching Linux');
     await dialog.getByRole('button', { name: 'Close terminal' }).click();
     await expect(dialog).not.toHaveAttribute('open');
@@ -529,8 +528,8 @@ test.describe('with scripts on', () => {
     await expect(screen).not.toContainText('Fetching Linux');
     await expect(dialog.locator('.xterm-helper-textarea')).not.toBeFocused();
 
-    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
-    await expect(screen).toContainText('~% ', { timeout: 30_000 });
+    await button.click();
+    await prompt();
     await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
   });
 
