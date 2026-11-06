@@ -15,7 +15,7 @@
     "lint:js:fix": "eslint --fix .",
     "lint:prettier": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
-    "lint:types": "tsc",
+    "lint:types": "tsc && tsc -p src && tsc -p tests",
     "preview": "vite preview",
     "render:logos": "node scripts/render-logos.ts",
     "test": "vitest run",
