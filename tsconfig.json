@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+
+    // Node's globals alone, since Node runs `scripts/` and the configs beside this one. `src/tsconfig.json` swaps them
+    // for the browser's and Vite's, and `tests/tsconfig.json` adds the browser's, so no code type-checks against
+    // globals its runtime lacks.
+    "lib": ["ES2023"],
+    "types": ["node"],
 
     // `nodenext` because Node runs `scripts/` as it stands, and its resolver is the one that makes a missing extension
     // an error rather than a module that type-checks and then fails to load. Vite resolves the same specifiers.
@@ -18,8 +23,7 @@
     "resolveJsonModule": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true,
-    "types": ["node", "vite/client"]
+    "skipLibCheck": true
   },
-  "include": ["src", "scripts", "tests", "*.ts"]
+  "include": ["scripts", "*.ts"]
 }

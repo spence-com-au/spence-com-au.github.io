@@ -14,5 +14,8 @@
 /playwright-report/
 /test-results/
 
+# TypeScript, whose `tsc -b` writes its build state beside each config even under `noEmit`
+*.tsbuildinfo
+
 # v86, fetched by `scripts/v86.ts`
 /public/v86/
