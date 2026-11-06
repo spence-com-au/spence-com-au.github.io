@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 const url = 'http://localhost:4173/';
 
 // A directory of its own, so that a run never swaps the fixture into the build of the live repos `pnpm preview` serves.
-const OUT_DIR = '_fixture-site';
+const OUT_DIR = 'dist/fixture';
 
 export default defineConfig({
   testDir: 'tests/e2e',

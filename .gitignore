@@ -1,7 +1,6 @@
 # Build artefacts
+/dist/
 /repos.json
-/_site/
-/_fixture-site/
 
 # Claude
 /.claude/worktrees/
