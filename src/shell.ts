@@ -11,17 +11,22 @@ export function connect(card: HTMLElement): void {
   let linux: Promise<Linux | undefined> | undefined;
 
   // A failure says why on the screen and is forgotten, so that opening the card again tries again, from a clear screen.
+  // A failed import asks for a reload instead: some browsers, Safari among them, repeat a failed import without
+  // fetching it again, and once a deploy has replaced the chunk it names, only a reloaded page names the new one.
   function start(): Promise<Linux | undefined> {
     screen.replaceChildren();
 
-    return import('./linux.ts')
-      .then((module) => module.boot(screen))
-      .catch((error: unknown) => {
-        linux = undefined;
-        screen.textContent = `${error instanceof Error ? error.message : String(error)}. Close and open it to try again.`;
+    function fail(error: unknown, advice: string): undefined {
+      linux = undefined;
+      screen.textContent = `${error instanceof Error ? error.message : String(error)}. ${advice}`;
 
-        return undefined;
-      });
+      return undefined;
+    }
+
+    return import('./linux.ts').then(
+      (module) => module.boot(screen).catch((error: unknown) => fail(error, 'Close and open it to try again.')),
+      (error: unknown) => fail(error, 'Reload the page to try again.'),
+    );
   }
 
   async function open(): Promise<void> {
