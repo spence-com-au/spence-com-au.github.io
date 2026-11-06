@@ -576,10 +576,23 @@ test.describe('with scripts on', () => {
     await page.keyboard.type('busybox | head -1\n');
     await expect(screen).toContainText('BusyBox v1.');
 
+    // Left asleep behind the closed dialog. Its answer is the sum rather than the sum's expression, so that the line
+    // typed in never reads as the answer.
+    await page.keyboard.type('sleep 2; echo woke-$((1+1))\n');
+    await dialog.getByRole('button', { name: 'Close terminal' }).click();
+    await expect(dialog).toBeHidden();
+
+    // A hidden terminal draws nothing, whatever it is written, so the dialog is shown again without the click that runs
+    // the emulator, to see whether the guest wakes meanwhile. It does only if closing did not pause the emulator, which
+    // takes the whole wait to show, as an absence does.
+    await page.locator('dialog').evaluate((element: HTMLDialogElement) => element.showModal());
+    await page.waitForTimeout(5_000);
+    await expect(screen).not.toContainText('woke-2');
     await dialog.getByRole('button', { name: 'Close terminal' }).click();
     await expect(dialog).toBeHidden();
 
     await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(screen.getByText('woke-2', { exact: true })).toBeVisible();
     await page.keyboard.type('uname -s\n');
     await expect(screen).toContainText('BusyBox v1.');
     await expect(screen.getByText('Linux', { exact: true })).toBeVisible();
