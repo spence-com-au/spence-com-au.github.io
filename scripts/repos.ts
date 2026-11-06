@@ -149,7 +149,9 @@ async function readCommittedManifest(repo: Repo): Promise<{ manifest: Manifest; 
   const { content, download_url } = (await res.json()) as Content;
   const url = new URL(download_url);
 
-  return { manifest: parseManifest(Buffer.from(content, 'base64').toString(), url), url };
+  // `TextDecoder` drops a leading byte order mark, as `res.text()` does for a site's manifest and a browser does for
+  // either, where `Buffer#toString` keeps it for `JSON.parse` to reject.
+  return { manifest: parseManifest(new TextDecoder().decode(Buffer.from(content, 'base64')), url), url };
 }
 
 function parseManifest(body: string, url: URL): Manifest {
