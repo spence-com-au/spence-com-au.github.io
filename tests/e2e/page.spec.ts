@@ -427,6 +427,26 @@ test.describe('with scripts on', () => {
     });
   }
 
+  // The module that boots it missing, as after a deploy that replaced it, which no reopening of the card brings back.
+  test('says why the Terminal could not load, and tries again once the page is reloaded', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    const glob = '**/assets/linux-*.js';
+    const errors: Error[] = [];
+    const dialog = page.getByRole('dialog', { name: 'Terminal' });
+
+    page.on('pageerror', (error) => errors.push(error));
+    await page.route(glob, (route) => route.fulfill({ status: 404 }));
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(dialog).toContainText('Reload the page to try again.');
+
+    await page.unroute(glob);
+    await page.reload();
+    await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+    await expect(dialog.locator('.xterm-rows')).toContainText('~% ', { timeout: 30_000 });
+    expect(errors).toEqual([]);
+  });
+
   test('opens and closes the Terminal on a backtick, which the shell never receives', async ({ page }) => {
     test.setTimeout(60_000);
 
