@@ -13,6 +13,10 @@ describe('initials', () => {
     expect(initials(title)).toBe(expected);
   });
 
+  it('keeps an emoji that starts a word whole', () => {
+    expect(initials('🦖 Park')).toBe('🦖P');
+  });
+
   it.each([
     ['an empty title', ''],
     ['a title of spaces', '   '],
