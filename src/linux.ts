@@ -1,5 +1,5 @@
-// Linux in [v86](https://github.com/copy/v86), an x86 emulator compiled to WebAssembly, on a terminal drawn by xterm.js.
-// Only `src/shell.ts` imports it, once the Terminal card is opened, so the page itself ships none of it.
+// Linux in [v86](https://github.com/copy/v86), an x86 emulator compiled to WebAssembly, on a terminal drawn by
+// xterm.js. Only `src/shell.ts` imports it, once the Terminal card is opened, so the page itself ships none of it.
 import '@xterm/xterm/css/xterm.css';
 
 import { Terminal } from '@xterm/xterm';
@@ -35,9 +35,9 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
 
   fit.observe(screen);
 
-  // The emulator and its images are fetched here rather than by v86, which only logs a missing file and retries a failed
-  // one forever, so a failure could never surface. Megabytes, so the wait shows on the screen it is for, on one line
-  // rewritten as it counts up.
+  // The emulator and its images are fetched here rather than by v86, which only logs a missing file and retries a
+  // failed one forever, so a failure could never surface. Megabytes, so the wait shows on the screen it is for, on one
+  // line rewritten as it counts up.
   let loaded = 0;
 
   async function download(url: string): Promise<ArrayBuffer> {
