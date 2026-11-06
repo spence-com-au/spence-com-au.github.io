@@ -185,8 +185,8 @@ importers:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
       v86:
-        specifier: 0.5.472
-        version: 0.5.472
+        specifier: 0.5.473
+        version: 0.5.473
     devDependencies:
       '@eslint/js':
         specifier: 10.0.1
@@ -1870,8 +1870,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  v86@0.5.472:
-    resolution: {integrity: sha512-x2uw/IeJvIxSelkHvM3BzfhJ0KQOo3fFEOyMxIiOjMeCZFrR+UYwJ44/swRabcP/5QL1hBimUewpRPYWOwFI0A==}
+  v86@0.5.473:
+    resolution: {integrity: sha512-mNHB0DXDmfxn0CrlqCmlgMR1W7aKuD+sHmSctLcTROOwpOvbE4qsAhmaE6Vy+riQfcE4PfA2xvW59/ZXsYnHNw==}
 
   vite@8.3.5:
     resolution: {integrity: sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==}
@@ -3344,7 +3344,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  v86@0.5.472: {}
+  v86@0.5.473: {}
 
   vite@8.3.5(@types/node@24.19.2):
     dependencies:
