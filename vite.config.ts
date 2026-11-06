@@ -24,11 +24,10 @@ export default defineConfig({
     },
 
     // Into the public directory, which the dev server serves from and the build copies into the site. Not for Vitest,
-    // whose server would otherwise fetch megabytes for unit tests that boot nothing, nor for the server build, which
-    // copies no public directory and so has no use for them.
+    // whose server would otherwise fetch megabytes for unit tests that boot nothing.
     {
       name: 'v86-images',
-      apply: (_, { isSsrBuild, mode }) => mode !== 'test' && !isSsrBuild,
+      apply: (_, { mode }) => mode !== 'test',
       buildStart: () => fetchImages(`${import.meta.dirname}/public/${DIR}`),
     },
   ],
