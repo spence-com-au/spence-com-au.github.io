@@ -6,7 +6,7 @@ import { DIR } from './src/v86.ts';
 
 export default defineConfig({
   build: {
-    outDir: '_site',
+    outDir: 'dist/site',
 
     // The page preloads only what the Terminal card imports once opened, and every current browser preloads a module
     // itself, so a polyfill would be bytes shipped for none.
