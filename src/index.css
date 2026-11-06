@@ -260,19 +260,6 @@ button.open {
   border-radius: var(--radius);
 }
 
-.nowrap {
-  white-space: nowrap;
-}
-
-/* Sized by height alone, so a mark wider than it is tall, as Android's is, keeps its proportions from its `viewBox`. */
-.open svg {
-  width: auto;
-  height: 1.125rem;
-  margin-left: 0.375rem;
-  color: var(--muted);
-  vertical-align: -0.0625rem;
-}
-
 .card p {
   margin: 0;
   color: var(--muted);
