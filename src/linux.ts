@@ -42,8 +42,12 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
   // line rewritten as it counts up.
   let loaded = 0;
 
+  // Aborted by the `catch`, as `Promise.all` rejecting on one failed download leaves the others reading on, megabytes
+  // into a disposed terminal, alongside those of the next attempt.
+  const downloads = new AbortController();
+
   async function download(url: string): Promise<ArrayBuffer> {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: downloads.signal });
 
     if (!res.ok || !res.body) {
       throw new Error(`Fetching ${url.split('/').pop()} failed: ${res.status}`);
@@ -119,6 +123,7 @@ export async function boot(screen: HTMLElement): Promise<{ emulator: V86; termin
     // failure did not.
     created?.destroy().catch(() => undefined);
 
+    downloads.abort();
     fit.disconnect();
     terminal.dispose();
     throw error;
