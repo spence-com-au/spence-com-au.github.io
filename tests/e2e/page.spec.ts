@@ -64,6 +64,8 @@ test('prerenders a card for every repo', async ({ page }) => {
 
     if (project.description) {
       await expect(card.getByText(project.description)).toBeVisible();
+    } else {
+      await expect(card.locator('p')).toHaveCount(0);
     }
   }
 });
@@ -71,8 +73,8 @@ test('prerenders a card for every repo', async ({ page }) => {
 // `scripts/build.ts` splices the cards into the page with `String.replace`, which reads a `$&`, `` $` `` or `$'` in a
 // replacement string as a pattern for part of the page.
 test('shows the replacement patterns in a description as written', async ({ page }) => {
-  const { title, description } = find('with a `$&` in its description', (p): p is Project =>
-    p.description.includes('$&'),
+  const { title, description } = find('with a `$&` in its description', (p): p is Project & { description: string } =>
+    Boolean(p.description?.includes('$&')),
   );
 
   await expect(cardOf(page, title)).toContainText(description);
