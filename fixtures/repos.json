@@ -58,6 +58,15 @@
     "themeColor": null
   },
   {
+    "title": "spence.com.au",
+    "description": "Landing page for spence.com.au",
+    "site": null,
+    "apk": null,
+    "repo": "https://github.com/spence-com-au/spence-com-au.github.io",
+    "icon": "https://spence.com.au/icon-512.png",
+    "themeColor": "#f4efe6"
+  },
+  {
     "title": "Weather Station",
     "description": null,
     "site": null,

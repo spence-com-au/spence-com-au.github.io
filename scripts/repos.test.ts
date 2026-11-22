@@ -343,16 +343,41 @@ describe('listProjects', () => {
     await expect(listProjects(DOMAIN)).rejects.toThrow(message);
   });
 
-  it('leaves out private repos, dot-named repos and the site itself', async () => {
-    routes = repos(1, [
-      repo('.github'),
-      repo('secret', { private: true }),
-      repo('spence-com-au.github.io', { has_pages: true }),
-      repo('car-racer'),
-    ]);
-    routes = { ...routes, ...releases('car-racer') };
+  it('leaves out private and dot-named repos', async () => {
+    routes = {
+      ...repos(1, [repo('.github'), repo('secret', { private: true }), repo('car-racer')]),
+      ...releases('car-racer'),
+    };
 
     expect(await listProjects(DOMAIN)).toMatchObject([{ title: 'Car Racer' }]);
+  });
+
+  it('links the site itself to GitHub, describing it from the manifest served at the root', async () => {
+    const name = 'spence-com-au.github.io';
+    routes = {
+      ...repos(1, [repo(name, { has_pages: true, description: 'Landing page' })]),
+      [`https://${DOMAIN}/`]: () =>
+        new Response('<html><head><link rel="manifest" href="/manifest.webmanifest"></head></html>'),
+      [`https://${DOMAIN}/manifest.webmanifest`]: () =>
+        Response.json({
+          name: 'spence.com.au',
+          icons: [{ src: '/icon-512.png', sizes: '512x512' }],
+          theme_color: '#f4efe6',
+        }),
+      ...releases(name),
+    };
+
+    expect(await listProjects(DOMAIN)).toEqual([
+      {
+        title: 'spence.com.au',
+        description: 'Landing page',
+        site: null,
+        apk: null,
+        repo: `https://github.com/spence-com-au/${name}`,
+        icon: `https://${DOMAIN}/icon-512.png`,
+        themeColor: '#f4efe6',
+      },
+    ]);
   });
 
   it('reads every page of repos', async () => {
