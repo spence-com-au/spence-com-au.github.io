@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import { initials, type Project } from './project.ts';
+import { initials, OWNER, SITE_REPO, type Project } from './project.ts';
 import { BACKGROUNDS, tint } from './theme.ts';
 
 /** GitHub's mark, from [Octicons](https://primer.style/octicons/icon/mark-github-16/) (MIT). */
@@ -151,10 +151,19 @@ export default function App({ projects }: { projects: Project[] }) {
           </span>
         </h1>
 
-        {/* Hidden until `src/scheme.ts` runs, since without a script it can switch nothing. */}
-        <button className="scheme" type="button" aria-label="Dark scheme" aria-pressed="false" hidden>
-          <Mark icon={SCHEME} />
-        </button>
+        <div className="controls">
+          {/* Hidden until `src/scheme.ts` runs, since without a script it can switch nothing. */}
+          <button className="scheme" type="button" aria-label="Dark scheme" aria-pressed="false" hidden>
+            <Mark icon={SCHEME} />
+          </button>
+          <a
+            className="repo"
+            href={`https://github.com/${OWNER}/${SITE_REPO}`}
+            aria-label="Source code for spence.com.au on GitHub"
+          >
+            <Mark icon={GITHUB} />
+          </a>
+        </div>
       </header>
       <ul className="cards">{cards.map(({ card }) => card)}</ul>
     </main>

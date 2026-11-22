@@ -1,9 +1,6 @@
 import { parse } from 'node-html-parser';
 
-import type { Project } from '../src/project.ts';
-
-const OWNER = 'spence-com-au';
-const SITE_REPO = `${OWNER}.github.io`;
+import { OWNER, SITE_REPO, type Project } from '../src/project.ts';
 
 /** Where a repo without a site commits the manifest that describes it, pointing at an icon wherever it keeps one. */
 const COMMITTED_MANIFEST = '.github/manifest.webmanifest';

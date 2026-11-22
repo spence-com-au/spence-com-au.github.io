@@ -1,3 +1,8 @@
+export const OWNER = 'spence-com-au';
+
+/** The repo this site is built from, which lists no card of its own. */
+export const SITE_REPO = `${OWNER}.github.io`;
+
 /** A card on the landing page, as `pnpm fetch:repos` writes it to `repos.json` for `pnpm build` to render. */
 export interface Project {
   title: string;

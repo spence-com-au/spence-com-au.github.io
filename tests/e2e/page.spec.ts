@@ -177,6 +177,13 @@ test('opens a site from anywhere on its card, but its source from the source lin
   await expect(page).toHaveURL(project.site);
 });
 
+test("links the site's own source", async ({ page }) => {
+  await expect(page.getByRole('link', { name: 'Source code for spence.com.au on GitHub' })).toHaveAttribute(
+    'href',
+    'https://github.com/spence-com-au/spence-com-au.github.io',
+  );
+});
+
 // A preload whose path Vite failed to resolve would 404 and quietly bring back the swap from the fallback font.
 test('preloads the font the stylesheet draws the page in', async ({ page }) => {
   const font = (await page.locator('link[rel="preload"][as="font"]').getAttribute('href')) ?? '';

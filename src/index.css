@@ -53,6 +53,12 @@ header {
   margin-bottom: clamp(2rem, 5vw, 3rem);
 }
 
+/* The scheme switch and the page's own source link, side by side opposite the logo. */
+.controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
 /* The logo: the name in capitals, then a block cursor filling the next character cell. */
 h1 {
   display: flex;
@@ -66,7 +72,10 @@ h1 {
 
 /* A toy block like the cards, sinking onto its edge when pressed. */
 .scheme,
-.close {
+.close,
+.repo {
+  /* A button's default, which the link lacks, so that its border falls within its size rather than adding to it. */
+  box-sizing: border-box;
   display: grid;
   flex-shrink: 0;
   place-items: center;
@@ -91,19 +100,22 @@ h1 {
 }
 
 .scheme:active,
-.close:active {
+.close:active,
+.repo:active {
   translate: 0 0.1875rem;
   box-shadow: 0 0.0625rem 0 var(--edge);
 }
 
 .scheme:focus-visible,
-.close:focus-visible {
+.close:focus-visible,
+.repo:focus-visible {
   outline: 0.1875rem solid var(--text);
   outline-offset: 0.25rem;
 }
 
 .scheme svg,
-.close svg {
+.close svg,
+.repo svg {
   width: 1.5rem;
   height: 1.5rem;
 }
@@ -420,7 +432,8 @@ button.open {
 @media (prefers-reduced-motion: reduce) {
   .card,
   .scheme,
-  .close {
+  .close,
+  .repo {
     transition: none;
   }
 
