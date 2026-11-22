@@ -151,22 +151,21 @@ export default function App({ projects }: { projects: Project[] }) {
           </span>
         </h1>
 
-        {/* Hidden until `src/scheme.ts` runs, since without a script it can switch nothing. */}
-        <button className="scheme" type="button" aria-label="Dark scheme" aria-pressed="false" hidden>
-          <Mark icon={SCHEME} />
-        </button>
+        <div className="controls">
+          {/* Hidden until `src/scheme.ts` runs, since without a script it can switch nothing. */}
+          <button className="scheme" type="button" aria-label="Dark scheme" aria-pressed="false" hidden>
+            <Mark icon={SCHEME} />
+          </button>
+          <a
+            className="repo"
+            href={`https://github.com/${OWNER}/${SITE_REPO}`}
+            aria-label="Source code for spence.com.au on GitHub"
+          >
+            <Mark icon={GITHUB} />
+          </a>
+        </div>
       </header>
       <ul className="cards">{cards.map(({ card }) => card)}</ul>
-      <footer>
-        <a
-          className="source"
-          href={`https://github.com/${OWNER}/${SITE_REPO}`}
-          aria-label="Source code for spence.com.au on GitHub"
-        >
-          <Mark icon={GITHUB} />
-          Source
-        </a>
-      </footer>
     </main>
   );
 }
