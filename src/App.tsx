@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import { initials, type Project } from './project.ts';
+import { initials, OWNER, SITE_REPO, type Project } from './project.ts';
 import { BACKGROUNDS, tint } from './theme.ts';
 
 /** GitHub's mark, from [Octicons](https://primer.style/octicons/icon/mark-github-16/) (MIT). */
@@ -157,6 +157,16 @@ export default function App({ projects }: { projects: Project[] }) {
         </button>
       </header>
       <ul className="cards">{cards.map(({ card }) => card)}</ul>
+      <footer>
+        <a
+          className="source"
+          href={`https://github.com/${OWNER}/${SITE_REPO}`}
+          aria-label="Source code for spence.com.au on GitHub"
+        >
+          <Mark icon={GITHUB} />
+          Source
+        </a>
+      </footer>
     </main>
   );
 }

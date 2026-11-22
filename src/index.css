@@ -314,6 +314,11 @@ button.open {
   font-weight: 600;
 }
 
+/* The page's own source link, below the cards it is no part of. */
+main > footer {
+  margin-top: 3rem;
+}
+
 .source svg {
   width: 1rem;
   height: 1rem;
