@@ -193,8 +193,8 @@ h1 {
  */
 @media (hover: hover) {
   .card:has(.open:hover) {
-    translate: 0 -0.125rem;
-    box-shadow: 0 0.625rem 0 var(--edge-color);
+    translate: 0 -0.375rem;
+    box-shadow: 0 0.875rem 0 var(--edge-color);
   }
 }
 
