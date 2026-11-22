@@ -175,6 +175,17 @@ h1 {
     box-shadow 80ms ease-out;
 }
 
+/**
+ * Lifted off its edge under a pointer, the press run backwards, by as much as the edge grows so its foot stays put. Only
+ * where hover is real, as a tap would otherwise leave the card raised, and before the press so that one still sinks it.
+ */
+@media (hover: hover) {
+  .card:has(.open:hover) {
+    translate: 0 -0.125rem;
+    box-shadow: 0 0.625rem 0 var(--edge-color);
+  }
+}
+
 .card:has(.open:active) {
   translate: 0 0.375rem;
   box-shadow: 0 0.125rem 0 var(--edge-color);
