@@ -26,7 +26,8 @@ export function connect(): void {
       linux = undefined;
       const reason = error instanceof Error ? error.message : String(error);
 
-      screen.textContent = `${reason}. ${advice}`;
+      // Firefox's message for a failed fetch and Safari's for a failed import end in a full stop of their own.
+      screen.textContent = `${reason.replace(/\.$/, '')}. ${advice}`;
 
       return undefined;
     }
