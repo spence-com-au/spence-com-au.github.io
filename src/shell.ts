@@ -87,9 +87,15 @@ export function connect(): void {
     { capture: true },
   );
 
-  // Paused rather than left running behind the page, to carry on where it left off when opened again.
+  // Paused rather than left running behind the page, to carry on where it left off when opened again. Unless it already
+  // has been: `close` fires in a task of its own, which a backtick opening it again can run before, as Chrome runs input
+  // first.
   dialog.addEventListener('close', async () => {
-    await (await linux)?.emulator.stop();
+    const booted = await linux;
+
+    if (!dialog.open) {
+      await booted?.emulator.stop();
+    }
   });
 }
 
