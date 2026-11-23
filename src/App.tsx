@@ -109,7 +109,14 @@ function Shell() {
   return (
     <li className="card shell" hidden>
       <span className="tile" aria-hidden="true">
-        $
+        {/* A prompt, `>_`, casting a long shadow down to the right that the tile's corners clip. */}
+        <svg viewBox="0 0 96 96">
+          <path
+            className="shadow"
+            d="M18 22L44 35L140 131L128 131L114 125L18 29ZM18 41L32 35L44 35L140 131L114 144L18 48ZM54 66L80 66L176 162L176 169L150 169L54 73Z"
+          />
+          <path fill="currentColor" d="M18 22L44 35L18 48V41L32 35L18 29ZM54 66H80V73H54Z" />
+        </svg>
       </span>
       <h2>
         <button className="open" type="button" aria-keyshortcuts="`">

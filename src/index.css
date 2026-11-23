@@ -221,6 +221,19 @@ span.tile {
   line-height: 1;
 }
 
+.shell .tile {
+  overflow: hidden;
+}
+
+.tile svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tile .shadow {
+  fill: rgb(0 0 0 / 25%);
+}
+
 h2 {
   margin: 0;
   font-size: 1.1875rem;
