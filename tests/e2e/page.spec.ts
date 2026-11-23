@@ -528,7 +528,7 @@ test.describe('with scripts on', () => {
       release = () => resolve(undefined);
     });
 
-    await page.route('**/v86/buildroot-bzimage68.bin', async (route) => {
+    await page.route(`**/${DIR}/${FILES.bzimage}`, async (route) => {
       await released;
       await route.continue();
     });
