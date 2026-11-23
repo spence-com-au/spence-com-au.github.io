@@ -65,8 +65,7 @@ h1 {
 }
 
 /* A toy block like the cards, sinking onto its edge when pressed. */
-.scheme,
-.close {
+.toy {
   display: grid;
   flex-shrink: 0;
   place-items: center;
@@ -90,20 +89,17 @@ h1 {
   display: none;
 }
 
-.scheme:active,
-.close:active {
+.toy:active {
   translate: 0 0.1875rem;
   box-shadow: 0 0.0625rem 0 var(--edge);
 }
 
-.scheme:focus-visible,
-.close:focus-visible {
+.toy:focus-visible {
   outline: 0.1875rem solid var(--text);
   outline-offset: 0.25rem;
 }
 
-.scheme svg,
-.close svg {
+.toy svg {
   width: 1.5rem;
   height: 1.5rem;
 }
@@ -424,8 +420,7 @@ button.open {
 
 @media (prefers-reduced-motion: reduce) {
   .card,
-  .scheme,
-  .close {
+  .toy {
     transition: none;
   }
 
