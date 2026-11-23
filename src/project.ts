@@ -23,13 +23,20 @@ export interface Project {
   themeColor: string | null;
 }
 
+const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+
 /**
- * What a card without an icon shows in its place: the first letter of each word of its title, taken by code point
- * rather than by UTF-16 unit so that an emoji is not cut in half.
+ * The characters a reader sees in `text`, split by grapheme rather than by code point or UTF-16 unit, so that a flag,
+ * an emoji with a skin tone or joined to another, a keycap or a letter with a combining accent each stays one.
  */
+export function graphemes(text: string): string[] {
+  return Array.from(segmenter.segment(text), ({ segment }) => segment);
+}
+
+/** What a card without an icon shows in its place: the first character of each word of its title. */
 export function initials(title: string): string {
   return title
     .split(' ')
-    .map((word) => [...word][0])
+    .map((word) => graphemes(word)[0])
     .join('');
 }

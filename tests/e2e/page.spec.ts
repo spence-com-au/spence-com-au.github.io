@@ -3,7 +3,7 @@ import { formatRgb } from 'culori';
 import { parse } from 'node-html-parser';
 
 import projects from '../../fixtures/repos.json' with { type: 'json' };
-import { initials } from '../../src/project.ts';
+import { graphemes, initials } from '../../src/project.ts';
 import { BACKGROUNDS, tint } from '../../src/theme.ts';
 import { DIR, FILES } from '../../src/v86.ts';
 
@@ -95,7 +95,7 @@ for (const [name, { viewport }] of [
   test(`fits three initials in a tile on ${name}`, async ({ page }) => {
     const { title } = find(
       'without an icon, of three initials',
-      (p): p is Project => !p.icon && [...initials(p.title)].length === 3,
+      (p): p is Project => !p.icon && graphemes(initials(p.title)).length === 3,
     );
 
     await page.setViewportSize(viewport);

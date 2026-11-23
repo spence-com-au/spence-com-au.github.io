@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import { initials, type Project } from './project.ts';
+import { graphemes, initials, type Project } from './project.ts';
 import { BACKGROUNDS, tint } from './theme.ts';
 
 /** GitHub's mark, from [Octicons](https://primer.style/octicons/icon/mark-github-16/) (MIT). */
@@ -70,7 +70,7 @@ function Card({ project }: { project: Project }) {
       {icon ? (
         <img className="tile" src={icon} alt="" />
       ) : (
-        <span className="tile" aria-hidden="true" style={{ '--letters': [...monogram].length } as CSSProperties}>
+        <span className="tile" aria-hidden="true" style={{ '--letters': graphemes(monogram).length } as CSSProperties}>
           {monogram}
         </span>
       )}
