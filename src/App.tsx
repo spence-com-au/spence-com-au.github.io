@@ -126,7 +126,7 @@ function Shell() {
       <p>A BusyBox shell on Linux, booted in your browser.</p>
       <dialog aria-label={TERMINAL}>
         <form method="dialog">
-          <button className="close" type="submit" aria-label="Close terminal">
+          <button className="toy" type="submit" aria-label="Close terminal">
             <Mark icon={CLOSE} />
           </button>
         </form>
@@ -159,7 +159,7 @@ export default function App({ projects }: { projects: Project[] }) {
         </h1>
 
         {/* Hidden until `src/scheme.ts` runs, since without a script it can switch nothing. */}
-        <button className="scheme" type="button" aria-label="Dark scheme" aria-pressed="false" hidden>
+        <button className="toy scheme" type="button" aria-label="Dark scheme" aria-pressed="false" hidden>
           <Mark icon={SCHEME} />
         </button>
       </header>

@@ -81,13 +81,12 @@ h1 {
  * its edge: a press there would be released off it, where it makes no click, and a hover would drop, so that the block
  * fell back under the pointer and rose again.
  */
-:is(.scheme, .close, .open, .source)::after {
+:is(.toy, .open, .source)::after {
   translate: 0 calc(-1 * var(--sink));
 }
 
 /* A toy block like the cards, sinking onto its edge when pressed. */
-.scheme,
-.close {
+.toy {
   /* Its own rather than inherited from the Terminal's card, which the close button sits in. */
   --sink: 0;
   --border-width: 0.1875rem;
@@ -111,8 +110,7 @@ h1 {
     box-shadow 80ms ease-out;
 }
 
-.scheme::after,
-.close::after {
+.toy::after {
   content: '';
   position: absolute;
   inset: calc(-1 * var(--border-width));
@@ -125,21 +123,18 @@ h1 {
   display: none;
 }
 
-.scheme:active,
-.close:active {
+.toy:active {
   --sink: 0.1875rem;
 
   box-shadow: 0 0.0625rem 0 var(--edge);
 }
 
-.scheme:focus-visible,
-.close:focus-visible {
+.toy:focus-visible {
   outline: 0.1875rem solid var(--text);
   outline-offset: 0.25rem;
 }
 
-.scheme svg,
-.close svg {
+.toy svg {
   width: 1.5rem;
   height: 1.5rem;
 }
@@ -474,8 +469,7 @@ button.open {
 
 @media (prefers-reduced-motion: reduce) {
   .card,
-  .scheme,
-  .close {
+  .toy {
     transition: none;
   }
 
