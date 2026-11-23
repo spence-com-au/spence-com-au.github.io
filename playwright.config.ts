@@ -2,8 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 const url = 'http://localhost:4173/';
 
-// A directory of its own, so that a run never swaps the fixture into the build of the live repos `pnpm preview` serves.
-const OUT_DIR = 'dist/fixture';
+// A directory of its own, since a build empties the one it writes to: sharing the live site's would swap the fixture
+// into what `pnpm preview` serves, and sharing `lint:html`'s would let a lint empty this one while a run serves it.
+const OUT_DIR = 'dist/e2e';
 
 export default defineConfig({
   testDir: 'tests/e2e',
