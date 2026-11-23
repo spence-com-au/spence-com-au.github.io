@@ -491,6 +491,26 @@ test.describe('with scripts on', () => {
     await expect(screen).not.toContainText('`');
   });
 
+  // Closing fires `close` in a task of its own, which a reopening keydown can run before, as Chrome runs input first.
+  // Both keydowns in one task force that order, which left the emulator stopped behind the open dialog.
+  test('keeps the shell running when opened again before it has finished closing', async ({ page }) => {
+    test.setTimeout(BOOT_TEST_TIMEOUT);
+
+    const { button, dialog, screen, prompt } = terminalOf(page);
+
+    await button.click();
+    await prompt();
+    await page.evaluate(() => {
+      for (let i = 0; i < 2; i++) {
+        dispatchEvent(new KeyboardEvent('keydown', { key: '`' }));
+      }
+    });
+    await expect(dialog).toBeVisible();
+    await dialog.locator('.xterm-helper-textarea').focus();
+    await page.keyboard.type('echo ok\n');
+    await expect(screen.getByText('ok', { exact: true })).toBeVisible();
+  });
+
   // The images load together and the shell boots only once all have, so holding the kernel back keeps the Terminal
   // loading for as long as a test needs. Returns what lets it go.
   async function holdKernel(page: Page): Promise<() => void> {
@@ -612,8 +632,17 @@ test.describe('with scripts on', () => {
     // Left asleep behind the closed dialog. Its answer is the sum rather than the sum's expression, so that the line
     // typed in never reads as the answer.
     await page.keyboard.type('sleep 2; echo woke-$((1+1))\n');
+
+    // Waited for, rather than the dialog hiding, which comes first: the emulator pauses on `close`, and only while the
+    // dialog is still closed by then.
+    const closed = page
+      .locator('dialog')
+      .evaluate(
+        (element) => new Promise((resolve) => element.addEventListener('close', () => resolve(null), { once: true })),
+      );
+
     await dialog.getByRole('button', { name: 'Close terminal' }).click();
-    await expect(dialog).toBeHidden();
+    await closed;
 
     // A hidden terminal draws nothing, whatever it is written, so the dialog is shown again without the click that runs
     // the emulator, to see whether the guest wakes meanwhile. It does only if closing did not pause the emulator, which
