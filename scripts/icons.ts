@@ -58,7 +58,9 @@ export function drawIcon({ favicon, plate }: Awaited<ReturnType<typeof readFavic
   const body = `${clip}<g${clip && ' clip-path="url(#plate)"'}>${fill}${art}</g>`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${body}</svg>`;
 
-  return new Resvg(svg, { fitTo: { mode: 'width', value: icon.size } }).render();
+  // The favicon draws its `S` as a path, so no font is needed: scanning the machine's would only slow each render and
+  // let the output vary between machines if text ever returned.
+  return new Resvg(svg, { fitTo: { mode: 'width', value: icon.size }, font: { loadSystemFonts: false } }).render();
 }
 
 export function renderIcon(...args: Parameters<typeof drawIcon>) {
