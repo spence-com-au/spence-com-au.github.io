@@ -536,6 +536,23 @@ test.describe('with scripts on', () => {
     return release;
   }
 
+  // The Terminal says the same whether or not the kernel is still downloading, so the request is watched instead. Never
+  // released, it ends only if the page cancels it, which keeps megabytes from streaming into a disposed terminal.
+  test('stops downloading the kernel once the emulator has failed to load', async ({ page }) => {
+    const failures: string[] = [];
+    const { button, dialog } = terminalOf(page);
+
+    page.on('requestfailed', (request) => failures.push(`${request.url()} ${request.failure()?.errorText}`));
+    await holdKernel(page);
+    await page.route('**/v86-*.wasm', (route) => route.fulfill({ status: 404 }));
+    await button.click();
+    await expect(dialog).toContainText('Close and open it to try again.');
+
+    await expect
+      .poll(() => failures.filter((failure) => failure.includes(FILES.bzimage)))
+      .toEqual([expect.stringMatching(/ net::ERR_ABORTED$/)]);
+  });
+
   test('boots a shell in the Terminal closed and opened again while it loads', async ({ page }) => {
     test.setTimeout(BOOT_TEST_TIMEOUT);
 
