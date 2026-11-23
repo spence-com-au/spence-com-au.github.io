@@ -41,6 +41,9 @@ describe.each(Object.entries(BACKGROUNDS))('tint against the %s background', (sc
   it.each([
     ['not a colour', 'nonsense'],
     ['missing', null],
+    ['without a lightness', 'oklch(none 0.1 180)'],
+    ['whose lightness overflows', 'rgb(1e300 0 0)'],
+    ['that is not a string', JSON.parse('{"l": 1e103}')],
   ])('gives the neutral edge to a theme colour %s', (_, themeColor) => {
     expect(tint(themeColor, background)).toBeUndefined();
   });
