@@ -154,13 +154,18 @@ test('gives an installed app the light background', async ({ page }) => {
   expect(await manifest.json()).toMatchObject({ background_color: BACKGROUNDS.light, theme_color: BACKGROUNDS.light });
 });
 
-// The mark is the same in either scheme: the light background's colour lettered on a plate of the dark one's.
-test('draws the favicon in the two backgrounds', async ({ page }) => {
+// The mark is the same in either scheme: the light background's colour lettered on a plate of the dark one's, and its
+// cursor, the last shape drawn, in the colour the page draws its own cursors in.
+test('draws the favicon in the two backgrounds and the signal colour', async ({ page }) => {
   const href = (await page.locator('link[rel="icon"][type="image/svg+xml"]').getAttribute('href')) ?? '';
   const favicon = parse(await (await page.request.get(href)).text());
 
   expect(favicon.querySelector('rect')?.getAttribute('fill')).toBe(BACKGROUNDS.dark);
   expect(favicon.querySelector('path')?.getAttribute('fill')).toBe(BACKGROUNDS.light);
+  await expect(page.locator(':root')).toHaveCSS(
+    '--signal',
+    favicon.querySelectorAll('rect').at(-1)?.getAttribute('fill') ?? '',
+  );
 });
 
 test('opens a site from anywhere on its card, but its source from the source link', async ({ page }) => {
