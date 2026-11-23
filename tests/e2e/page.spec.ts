@@ -599,6 +599,31 @@ test.describe('with scripts on', () => {
     await expect(dialog.locator('.xterm-helper-textarea')).toBeFocused();
   });
 
+  // `src/linux.ts` fits the font to the screen but never below the stylesheet's size, which a phone is too narrow for
+  // the eighty columns at, so there the Terminal scrolls sideways rather than shrinking its text until it is illegible.
+  // The kernel is held back, as the font is fitted as soon as the Terminal is drawn, long before Linux boots.
+  test.describe('on a phone', () => {
+    test.use({ viewport: devices['Pixel 7'].viewport });
+
+    test('scrolls the Terminal sideways rather than shrinking its font', async ({ page }) => {
+      const { button, dialog } = terminalOf(page);
+      const screen = dialog.locator('.screen');
+
+      await holdKernel(page);
+      await button.click();
+      await expect(dialog).toContainText('Fetching Linux');
+
+      // Two frames, in which the font is fitted and the fit settles, rather than only the one it starts in.
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+      await expect(dialog.locator('.xterm-rows')).toHaveCSS(
+        'font-size',
+        await screen.evaluate((element) => getComputedStyle(element).fontSize),
+      );
+      expect(await screen.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+    });
+  });
+
   // Dispatched rather than typed, since Playwright types as a US layout does and most of these stand for other layouts'
   // keys. Ctrl and Meta with a backtick, which it could type, are beside them as modifiers that must not count.
   for (const { name, init, opens } of [
