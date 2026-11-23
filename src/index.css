@@ -53,12 +53,6 @@ header {
   margin-bottom: clamp(2rem, 5vw, 3rem);
 }
 
-/* The scheme switch and the page's own source link, side by side opposite the logo. */
-.controls {
-  display: flex;
-  gap: 0.75rem;
-}
-
 /* The logo: the name in capitals, then a block cursor filling the next character cell. */
 h1 {
   display: flex;
@@ -72,10 +66,7 @@ h1 {
 
 /* A toy block like the cards, sinking onto its edge when pressed. */
 .scheme,
-.close,
-.repo {
-  /* A button's default, which the link lacks, so that its border falls within its size rather than adding to it. */
-  box-sizing: border-box;
+.close {
   display: grid;
   flex-shrink: 0;
   place-items: center;
@@ -100,22 +91,19 @@ h1 {
 }
 
 .scheme:active,
-.close:active,
-.repo:active {
+.close:active {
   translate: 0 0.1875rem;
   box-shadow: 0 0.0625rem 0 var(--edge);
 }
 
 .scheme:focus-visible,
-.close:focus-visible,
-.repo:focus-visible {
+.close:focus-visible {
   outline: 0.1875rem solid var(--text);
   outline-offset: 0.25rem;
 }
 
 .scheme svg,
-.close svg,
-.repo svg {
+.close svg {
   width: 1.5rem;
   height: 1.5rem;
 }
@@ -233,12 +221,17 @@ span.tile {
   line-height: 1;
 }
 
-/* The Terminal's `$` keeps the logo's cursor after it, a prompt waiting for input. */
-.shell .tile::after {
-  content: '';
-  width: 1ch;
-  height: 1.2em;
-  background: var(--signal);
+.shell .tile {
+  overflow: hidden;
+}
+
+.tile svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tile .shadow {
+  fill: rgb(0 0 0 / 25%);
 }
 
 h2 {
@@ -432,8 +425,7 @@ button.open {
 @media (prefers-reduced-motion: reduce) {
   .card,
   .scheme,
-  .close,
-  .repo {
+  .close {
     transition: none;
   }
 

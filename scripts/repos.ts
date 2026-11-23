@@ -1,6 +1,11 @@
 import { parse } from 'node-html-parser';
 
-import { OWNER, SITE_REPO, type Project } from '../src/project.ts';
+import type { Project } from '../src/project.ts';
+
+const OWNER = 'spence-com-au';
+
+/** The repo this site is built from, which GitHub Pages serves at the root of the domain rather than under its name. */
+const SITE_REPO = `${OWNER}.github.io`;
 
 /** Where a repo without a site commits the manifest that describes it, pointing at an icon wherever it keeps one. */
 const COMMITTED_MANIFEST = '.github/manifest.webmanifest';
@@ -77,7 +82,7 @@ async function listRepos(): Promise<Repo[]> {
   }
 
   // A repo whose name starts with a dot, such as `.github`, configures the account rather than being a project.
-  return repos.filter((repo) => !repo.private && repo.name !== SITE_REPO && !repo.name.startsWith('.'));
+  return repos.filter((repo) => !repo.private && !repo.name.startsWith('.'));
 }
 
 /**
@@ -201,9 +206,12 @@ async function findApk(repo: Repo): Promise<Project['apk']> {
   return null;
 }
 
-async function toProject(domain: string, repo: Repo): Promise<Project> {
-  const site = repo.has_pages ? new URL(`https://${domain}/${repo.name}/`) : null;
-  const found = await (site ? readSiteManifest(site) : readCommittedManifest(repo));
+async function toProject(domain: string, repo: Repo, own: { manifest: Manifest; url: URL }): Promise<Project> {
+  // Pages serves this site's own repo at the root, where its card would only reload the page it is on, so it opens on
+  // GitHub like a repo without a site.
+  const home = repo.name === SITE_REPO;
+  const site = repo.has_pages && !home ? new URL(`/${repo.name}/`, `https://${domain}`) : null;
+  const found = home ? own : await (site ? readSiteManifest(site) : readCommittedManifest(repo));
   const { manifest, url } = found ?? { manifest: {}, url: null };
   const icon = url && pickIcon(manifest.icons ?? []);
 
@@ -223,7 +231,13 @@ async function toProject(domain: string, repo: Repo): Promise<Project> {
   };
 }
 
-/** Every public project repo in the account, as a card on the landing page at `domain`. */
-export async function listProjects(domain: string): Promise<Project[]> {
-  return Promise.all((await listRepos()).map((repo) => toProject(domain, repo)));
+/**
+ * Every public project repo in the account, as a card on the landing page at `domain`. The site's own card is described
+ * by `manifest`, the one in the checkout being built, rather than by the deploy before it, which may be stale or down.
+ */
+export async function listProjects(domain: string, manifest: string): Promise<Project[]> {
+  const url = new URL('/manifest.webmanifest', `https://${domain}`);
+  const own = { manifest: parseManifest(manifest, url), url };
+
+  return Promise.all((await listRepos()).map((repo) => toProject(domain, repo, own)));
 }

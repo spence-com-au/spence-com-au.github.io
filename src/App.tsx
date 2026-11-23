@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import { initials, OWNER, SITE_REPO, type Project } from './project.ts';
+import { initials, type Project } from './project.ts';
 import { BACKGROUNDS, tint } from './theme.ts';
 
 /** GitHub's mark, from [Octicons](https://primer.style/octicons/icon/mark-github-16/) (MIT). */
@@ -109,7 +109,14 @@ function Shell() {
   return (
     <li className="card shell" hidden>
       <span className="tile" aria-hidden="true">
-        $
+        {/* A prompt, `>_`, casting a long shadow down to the right that the tile's corners clip. */}
+        <svg viewBox="0 0 96 96">
+          <path
+            className="shadow"
+            d="M18 22L44 35L140 131L128 131L114 125L18 29ZM18 41L32 35L44 35L140 131L114 144L18 48ZM54 66L80 66L176 162L176 169L150 169L54 73Z"
+          />
+          <path fill="currentColor" d="M18 22L44 35L18 48V41L32 35L18 29ZM54 66H80V73H54Z" />
+        </svg>
       </span>
       <h2>
         <button className="open" type="button" aria-keyshortcuts="`">
@@ -151,19 +158,10 @@ export default function App({ projects }: { projects: Project[] }) {
           </span>
         </h1>
 
-        <div className="controls">
-          {/* Hidden until `src/scheme.ts` runs, since without a script it can switch nothing. */}
-          <button className="scheme" type="button" aria-label="Dark scheme" aria-pressed="false" hidden>
-            <Mark icon={SCHEME} />
-          </button>
-          <a
-            className="repo"
-            href={`https://github.com/${OWNER}/${SITE_REPO}`}
-            aria-label="Source code for spence.com.au on GitHub"
-          >
-            <Mark icon={GITHUB} />
-          </a>
-        </div>
+        {/* Hidden until `src/scheme.ts` runs, since without a script it can switch nothing. */}
+        <button className="scheme" type="button" aria-label="Dark scheme" aria-pressed="false" hidden>
+          <Mark icon={SCHEME} />
+        </button>
       </header>
       <ul className="cards">{cards.map(({ card }) => card)}</ul>
     </main>
