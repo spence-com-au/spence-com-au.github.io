@@ -5,6 +5,9 @@ import { listProjects } from './repos.ts';
 const DOMAIN = 'example.test';
 const API = 'https://api.github.com/users/spence-com-au/repos?type=owner&sort=full_name&per_page=100';
 
+/** The site's own manifest, as `scripts/fetch-repos.ts` reads it from the checkout. */
+const MANIFEST = JSON.stringify({ name: 'spence.com.au', icons: [{ src: '/icon-512.png' }], theme_color: '#f4efe6' });
+
 /** A repo as GitHub's API returns it, holding only the fields `listProjects` reads. */
 const repo = (name: string, overrides: object = {}) => ({
   name,
@@ -73,7 +76,7 @@ describe('listProjects', () => {
   it('links a repo without a site to GitHub, titled from its name', async () => {
     routes = { ...repos(1, [repo('car-racer', { description: 'Race cars' })]), ...releases('car-racer') };
 
-    expect(await listProjects(DOMAIN)).toEqual([
+    expect(await listProjects(DOMAIN, MANIFEST)).toEqual([
       {
         title: 'Car Racer',
         description: 'Race cars',
@@ -98,7 +101,7 @@ describe('listProjects', () => {
       ]),
     };
 
-    expect(await listProjects(DOMAIN)).toMatchObject([
+    expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([
       {
         site: null,
         apk: {
@@ -123,7 +126,7 @@ describe('listProjects', () => {
       ...releases('car-racer'),
     };
 
-    expect(await listProjects(DOMAIN)).toEqual([
+    expect(await listProjects(DOMAIN, MANIFEST)).toEqual([
       {
         title: 'Car Racer',
         description: 'Race cars — fast',
@@ -143,7 +146,7 @@ describe('listProjects', () => {
       ...releases('car-racer'),
     };
 
-    expect(await listProjects(DOMAIN)).toMatchObject([{ description: 'Race cars' }]);
+    expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([{ description: 'Race cars' }]);
   });
 
   it.each([
@@ -156,7 +159,7 @@ describe('listProjects', () => {
   ])('fails rather than strip a card when a repo commits a manifest and %s', async (_, manifest, message) => {
     routes = { ...repos(1, [repo('car-racer')]), ...manifest, ...releases('car-racer') };
 
-    await expect(listProjects(DOMAIN)).rejects.toThrow(message);
+    await expect(listProjects(DOMAIN, MANIFEST)).rejects.toThrow(message);
   });
 
   it("fails when GitHub cannot list a repo's releases", async () => {
@@ -166,7 +169,9 @@ describe('listProjects', () => {
         new Response('rate limited', { status: 403 }),
     };
 
-    await expect(listProjects(DOMAIN)).rejects.toThrow('Listing releases of car-racer failed: 403 rate limited');
+    await expect(listProjects(DOMAIN, MANIFEST)).rejects.toThrow(
+      'Listing releases of car-racer failed: 403 rate limited',
+    );
   });
 
   it('describes a site from its manifest, preferring an SVG icon to a larger bitmap', async () => {
@@ -184,7 +189,7 @@ describe('listProjects', () => {
       }),
     };
 
-    expect(await listProjects(DOMAIN)).toEqual([
+    expect(await listProjects(DOMAIN, MANIFEST)).toEqual([
       {
         title: 'Dino Park',
         description: 'Look after the dinosaurs.',
@@ -208,7 +213,7 @@ describe('listProjects', () => {
       }),
     };
 
-    expect(await listProjects(DOMAIN)).toMatchObject([{ icon: `https://${DOMAIN}/dino-park/icon` }]);
+    expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([{ icon: `https://${DOMAIN}/dino-park/icon` }]);
   });
 
   it("resolves an icon against the manifest's URL rather than the site's", async () => {
@@ -219,7 +224,9 @@ describe('listProjects', () => {
         Response.json({ icons: [{ src: 'icon.svg', sizes: 'any' }] }),
     };
 
-    expect(await listProjects(DOMAIN)).toMatchObject([{ icon: `https://${DOMAIN}/dino-park/assets/icon.svg` }]);
+    expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([
+      { icon: `https://${DOMAIN}/dino-park/assets/icon.svg` },
+    ]);
   });
 
   it.each([
@@ -237,7 +244,7 @@ describe('listProjects', () => {
       'https://cdn.test/manifest.webmanifest': () => Response.json({}),
     };
 
-    await listProjects(DOMAIN);
+    await listProjects(DOMAIN, MANIFEST);
 
     // Every route, since the listings of repos and of releases and the committed manifest each build their own headers.
     // The requests of different repos interleave, so only the set of them is pinned.
@@ -265,7 +272,7 @@ describe('listProjects', () => {
       }),
     };
 
-    expect(await listProjects(DOMAIN)).toMatchObject([
+    expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([
       { title: 'Pokémon GO Utilities', icon: `https://${DOMAIN}/pogo-utils/16-and-512.png` },
     ]);
   });
@@ -276,7 +283,7 @@ describe('listProjects', () => {
       ...site('pogo-utils', { icons: [{ src: 'maskable.png', sizes: '512x512', purpose: 'maskable' }] }),
     };
 
-    expect(await listProjects(DOMAIN)).toMatchObject([{ title: 'Pogo Utils', icon: null }]);
+    expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([{ title: 'Pogo Utils', icon: null }]);
   });
 
   it.each([
@@ -285,7 +292,7 @@ describe('listProjects', () => {
   ])('describes a site from its repo when its page %s', async (_, sitePage) => {
     routes = { ...repos(1, [repo('electronics-kit', { has_pages: true, description: 'Circuits' })]), ...sitePage };
 
-    expect(await listProjects(DOMAIN)).toEqual([
+    expect(await listProjects(DOMAIN, MANIFEST)).toEqual([
       {
         title: 'Electronics Kit',
         description: 'Circuits',
@@ -340,7 +347,7 @@ describe('listProjects', () => {
   ])('fails rather than strip a card when %s', async (_, sitePage, message) => {
     routes = { ...repos(1, [repo('dino-park', { has_pages: true })]), ...sitePage };
 
-    await expect(listProjects(DOMAIN)).rejects.toThrow(message);
+    await expect(listProjects(DOMAIN, MANIFEST)).rejects.toThrow(message);
   });
 
   it('leaves out private and dot-named repos', async () => {
@@ -349,25 +356,14 @@ describe('listProjects', () => {
       ...releases('car-racer'),
     };
 
-    expect(await listProjects(DOMAIN)).toMatchObject([{ title: 'Car Racer' }]);
+    expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([{ title: 'Car Racer' }]);
   });
 
-  it('links the site itself to GitHub, describing it from the manifest served at the root', async () => {
+  it('links the site itself to GitHub, describing it from its own manifest rather than the deployed one', async () => {
     const name = 'spence-com-au.github.io';
-    routes = {
-      ...repos(1, [repo(name, { has_pages: true, description: 'Landing page' })]),
-      [`https://${DOMAIN}/`]: () =>
-        new Response('<html><head><link rel="manifest" href="/manifest.webmanifest"></head></html>'),
-      [`https://${DOMAIN}/manifest.webmanifest`]: () =>
-        Response.json({
-          name: 'spence.com.au',
-          icons: [{ src: '/icon-512.png', sizes: '512x512' }],
-          theme_color: '#f4efe6',
-        }),
-      ...releases(name),
-    };
+    routes = { ...repos(1, [repo(name, { has_pages: true, description: 'Landing page' })]), ...releases(name) };
 
-    expect(await listProjects(DOMAIN)).toEqual([
+    expect(await listProjects(DOMAIN, MANIFEST)).toEqual([
       {
         title: 'spence.com.au',
         description: 'Landing page',
@@ -385,7 +381,7 @@ describe('listProjects', () => {
     const full = Array.from({ length: 100 }, (_, i) => repo(`repo-${String(i).padStart(3, '0')}`, { has_pages: true }));
     routes = { ...repos(1, full), ...repos(2, [repo('last', { has_pages: true })]) };
 
-    const projects = await listProjects(DOMAIN);
+    const projects = await listProjects(DOMAIN, MANIFEST);
 
     expect(projects).toHaveLength(101);
     expect(projects.at(-1)).toMatchObject({ title: 'Last' });
@@ -394,6 +390,6 @@ describe('listProjects', () => {
   it('fails when GitHub cannot list the repos', async () => {
     routes = { [`${API}&page=1`]: () => new Response('rate limited', { status: 403 }) };
 
-    await expect(listProjects(DOMAIN)).rejects.toThrow('Listing repos failed: 403 rate limited');
+    await expect(listProjects(DOMAIN, MANIFEST)).rejects.toThrow('Listing repos failed: 403 rate limited');
   });
 });

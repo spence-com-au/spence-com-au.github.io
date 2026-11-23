@@ -206,13 +206,12 @@ async function findApk(repo: Repo): Promise<Project['apk']> {
   return null;
 }
 
-async function toProject(domain: string, repo: Repo): Promise<Project> {
+async function toProject(domain: string, repo: Repo, own: { manifest: Manifest; url: URL }): Promise<Project> {
   // Pages serves this site's own repo at the root, where its card would only reload the page it is on, so it opens on
-  // GitHub like a repo without a site and takes no more than its manifest from there.
+  // GitHub like a repo without a site.
   const home = repo.name === SITE_REPO;
-  const served = repo.has_pages ? new URL(home ? '/' : `/${repo.name}/`, `https://${domain}`) : null;
-  const site = home ? null : served;
-  const found = await (served ? readSiteManifest(served) : readCommittedManifest(repo));
+  const site = repo.has_pages && !home ? new URL(`/${repo.name}/`, `https://${domain}`) : null;
+  const found = home ? own : await (site ? readSiteManifest(site) : readCommittedManifest(repo));
   const { manifest, url } = found ?? { manifest: {}, url: null };
   const icon = url && pickIcon(manifest.icons ?? []);
 
@@ -232,7 +231,13 @@ async function toProject(domain: string, repo: Repo): Promise<Project> {
   };
 }
 
-/** Every public project repo in the account, as a card on the landing page at `domain`. */
-export async function listProjects(domain: string): Promise<Project[]> {
-  return Promise.all((await listRepos()).map((repo) => toProject(domain, repo)));
+/**
+ * Every public project repo in the account, as a card on the landing page at `domain`. The site's own card is described
+ * by `manifest`, the one in the checkout being built, rather than by the deploy before it, which may be stale or down.
+ */
+export async function listProjects(domain: string, manifest: string): Promise<Project[]> {
+  const url = new URL('/manifest.webmanifest', `https://${domain}`);
+  const own = { manifest: parseManifest(manifest, url), url };
+
+  return Promise.all((await listRepos()).map((repo) => toProject(domain, repo, own)));
 }
