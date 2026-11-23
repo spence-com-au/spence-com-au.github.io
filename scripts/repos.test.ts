@@ -246,7 +246,7 @@ describe('listProjects', () => {
         Response.json({ icons: [{ src: 'icon.svg', sizes: 'any' }] }),
     };
 
-    expect(await listProjects(DOMAIN)).toMatchObject([{ icon: 'https://dino.test/assets/icon.svg' }]);
+    expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([{ icon: 'https://dino.test/assets/icon.svg' }]);
   });
 
   it.each([
