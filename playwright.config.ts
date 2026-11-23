@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const url = 'http://localhost:4173/';
+// Below the 4173 `pnpm preview` starts from and climbs away from when it is taken, so that a preview left running for
+// screenshots never holds the port the fixture has to be served on.
+const url = 'http://localhost:4172/';
 
 // A directory of its own, so that a run never swaps the fixture into the build of the live repos `pnpm preview` serves.
 const OUT_DIR = 'dist/fixture';
