@@ -26,9 +26,18 @@ export function tint(themeColor: string | null, background: string): string | un
   const step = (oklch(background)?.l ?? 1) < 0.5 ? 0.01 : -0.01;
   let shade = clampChroma(color, 'oklch');
 
-  while (wcagContrast(formatHex(shade), background) < 3) {
+  // culori leaves the lightness out of `oklch(none 0.1 180)`, and makes it `NaN` where a conversion overflows, as for
+  // `rgb(1e300 0 0)` or a manifest's `{"l": 1e103}`. No step moves either, and `formatHex` draws both as black, which
+  // would never reach 3:1 against the dark background, so each takes the neutral edge.
+  while (Number.isFinite(shade.l)) {
+    const hex = formatHex(shade);
+
+    if (wcagContrast(hex, background) >= 3) {
+      return hex;
+    }
+
     shade = clampChroma({ ...shade, l: shade.l + step }, 'oklch');
   }
 
-  return formatHex(shade);
+  return undefined;
 }
