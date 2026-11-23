@@ -111,11 +111,18 @@ async function get(url: URL): Promise<Response> {
  */
 async function readSiteManifest(site: URL): Promise<{ manifest: Manifest; url: URL } | null> {
   const page = await get(site);
-  const href =
-    page.ok &&
-    parse(await page.text())
-      .querySelector('link[rel="manifest"]')
-      ?.getAttribute('href');
+
+  if (page.status === 404) {
+    return null;
+  }
+
+  if (!page.ok) {
+    throw new Error(`Fetching ${site} failed: ${page.status}`);
+  }
+
+  const href = parse(await page.text())
+    .querySelector('link[rel="manifest"]')
+    ?.getAttribute('href');
 
   if (!href) {
     return null;

@@ -321,6 +321,11 @@ describe('listProjects', () => {
       `Fetching https://${DOMAIN}/dino-park/ failed: 502`,
     ],
     [
+      'its page is rate limited',
+      { [`https://${DOMAIN}/dino-park/`]: () => new Response('Too Many Requests', { status: 429 }) },
+      `Fetching https://${DOMAIN}/dino-park/ failed: 429`,
+    ],
+    [
       'the manifest it links is missing',
       page('dino-park', '<link rel="manifest" href="/dino-park/missing.json">'),
       `Fetching https://${DOMAIN}/dino-park/missing.json failed: 404`,
