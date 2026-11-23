@@ -121,8 +121,10 @@ async function readSiteManifest(site: URL): Promise<{ manifest: Manifest; url: U
     return null;
   }
 
-  const url = new URL(href, site);
-  const res = await get(url);
+  // The manifest's link and its icons resolve against the address that answered rather than the one asked, as a
+  // browser's do, since Pages redirects a project with its own domain there.
+  const res = await get(new URL(href, page.url));
+  const url = new URL(res.url);
 
   if (!res.ok) {
     throw new Error(`Fetching ${url} failed: ${res.status}`);

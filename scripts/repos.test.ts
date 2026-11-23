@@ -21,11 +21,16 @@ const repo = (name: string, overrides: object = {}) => ({
 // Every URL `listProjects` may request, mapped to what answers it; anything else is a 404.
 let routes: Record<string, () => Response>;
 
+/** Answer `url` from `routes`, following a redirect and recording the address that answered, as `fetch` does. */
+async function answer(url: string | URL): Promise<Response> {
+  const res = routes[String(url)]?.() ?? new Response('Not Found', { status: 404 });
+  const location = res.headers.get('Location');
+
+  return location ? answer(new URL(location, url)) : Object.defineProperty(res, 'url', { value: String(url) });
+}
+
 beforeEach(() => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (url: string | URL) => routes[String(url)]?.() ?? new Response('Not Found', { status: 404 })),
-  );
+  vi.stubGlobal('fetch', vi.fn(answer));
 });
 
 afterEach(() => {
@@ -227,6 +232,21 @@ describe('listProjects', () => {
     expect(await listProjects(DOMAIN, MANIFEST)).toMatchObject([
       { icon: `https://${DOMAIN}/dino-park/assets/icon.svg` },
     ]);
+  });
+
+  it('resolves the manifest and its icons against where redirects lead, as a browser does', async () => {
+    routes = {
+      ...repos(1, [repo('dino-park', { has_pages: true })]),
+
+      // As Pages sends a project with its own domain there, where it is built to be served from the root.
+      [`https://${DOMAIN}/dino-park/`]: () => Response.redirect('https://dino.test/', 301),
+      'https://dino.test/': () => new Response('<link rel="manifest" href="/manifest.json">'),
+      'https://dino.test/manifest.json': () => Response.redirect('https://dino.test/assets/manifest.webmanifest', 301),
+      'https://dino.test/assets/manifest.webmanifest': () =>
+        Response.json({ icons: [{ src: 'icon.svg', sizes: 'any' }] }),
+    };
+
+    expect(await listProjects(DOMAIN)).toMatchObject([{ icon: 'https://dino.test/assets/icon.svg' }]);
   });
 
   it.each([
