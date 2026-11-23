@@ -85,37 +85,34 @@ async function listRepos(): Promise<Repo[]> {
   return repos.filter((repo) => !repo.private && !repo.name.startsWith('.'));
 }
 
-/**
- * Fetch `url`, failing unless a server answered it below a 5xx. A site that is down fails the build, leaving the last
- * good deploy live, rather than deploying a card stripped of everything its manifest gave it until the next day's run.
- */
+/** Fetch `url`, naming it in the error when no server answers. */
 async function get(url: URL): Promise<Response> {
-  let res;
-
   try {
-    res = await fetch(url);
+    return await fetch(url);
   } catch (cause) {
     throw new Error(`Fetching ${url} failed`, { cause });
   }
-
-  if (res.status >= 500) {
-    throw new Error(`Fetching ${url} failed: ${res.status}`);
-  }
-
-  return res;
 }
 
 /**
  * The manifest a site's page links, with the URL its own links resolve against, or nothing for a page that has none —
- * including one Pages does not serve yet, which answers 404.
+ * including one Pages does not serve yet, which answers 404. Any other failure fails the build, leaving the last good
+ * deploy live, rather than deploying a card stripped of everything its manifest gave it until the next day's run.
  */
 async function readSiteManifest(site: URL): Promise<{ manifest: Manifest; url: URL } | null> {
   const page = await get(site);
-  const href =
-    page.ok &&
-    parse(await page.text())
-      .querySelector('link[rel="manifest"]')
-      ?.getAttribute('href');
+
+  if (page.status === 404) {
+    return null;
+  }
+
+  if (!page.ok) {
+    throw new Error(`Fetching ${site} failed: ${page.status}`);
+  }
+
+  const href = parse(await page.text())
+    .querySelector('link[rel="manifest"]')
+    ?.getAttribute('href');
 
   if (!href) {
     return null;
