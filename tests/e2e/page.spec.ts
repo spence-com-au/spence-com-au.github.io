@@ -337,8 +337,17 @@ test.describe('with scripts on', () => {
 
   const open = (page: Page) => cardOf(page, app().title).getByRole('heading').getByRole('link');
 
-  test.describe('on Android', () => {
+  // Playwright derives Chromium's `userAgentData` from the `User-Agent` string, so it is hidden to leave only the
+  // string to decide, as it does in Firefox and Safari, which have none.
+  test.describe('on Android by its user agent alone', () => {
     test.use({ userAgent: devices['Pixel 7'].userAgent });
+
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'userAgentData', { value: undefined });
+      });
+      await page.reload();
+    });
 
     test('downloads an app from its card', async ({ page }) => {
       const { apk, title } = app();
