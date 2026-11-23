@@ -19,10 +19,12 @@ export default {
      *
      * Prettier will not do this — it reflows prose and code to `printWidth` but never the inside of a comment — so
      * without this rule nothing says which shape a comment takes. The pattern matches the text between the delimiters,
-     * hence the leading star rather than the opener itself.
+     * hence the leading star rather than the opener itself, and lets any indent precede each later star, as a nested
+     * comment is indented with its rule. PostCSS trims that text, so the closer's line never reaches the pattern and is
+     * the one part of the shape left unchecked.
      */
     'comment-pattern': [
-      '^(?:[^\\n]*|\\*\\n[\\s\\S]*)$',
+      '^(?:[^\\n]*|\\*(?:\\n +\\*(?: [^\\n]*)?)+)$',
       { message: 'A multi-line comment is a starred block: "/**" on its own line, then " * " on each line after it' },
     ],
   },
