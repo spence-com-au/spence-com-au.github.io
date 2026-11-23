@@ -5,20 +5,21 @@
 }
 
 /**
- * Declared again on the terminal's dialog. The spec resolves the `light-dark()` in an unregistered custom property where
- * it is used, but Chromium resolves it against the scheme of the element declaring it, and drew the dark dialog cream
- * without this.
+ * Declared again on the terminal's dialog. The spec resolves the `light-dark()` in an unregistered custom property
+ * where it is used, but Chromium resolves it against the scheme of the element declaring it, and drew the dark dialog
+ * cream without this.
  */
 :root,
 .shell dialog {
-  /* `BACKGROUNDS` in `src/theme.ts`, which checks each card's tint against it. */
-  --background: light-dark(#f4efe6, #1d1b19);
   --surface: light-dark(#fffbf4, #2a2724);
   --text: light-dark(#1d1b19, #f4efe6);
+  --muted: light-dark(#6b6258, #a39a8f);
+
+  /* `BACKGROUNDS` in `src/theme.ts`, which checks each card's tint against it. */
+  --background: light-dark(#f4efe6, #1d1b19);
 
   /* The logo's cursor. Too light for text on cream, so it only ever fills shapes. */
   --signal: #ff5a36;
-  --muted: light-dark(#6b6258, #a39a8f);
 
   /* The edge of a card whose site has no theme colour for `tint` to darken or lighten. */
   --edge: var(--text);
@@ -176,8 +177,9 @@ h1 {
 }
 
 /**
- * Lifted off its edge under a pointer, the press run backwards, by as much as the edge grows so its foot stays put. Only
- * where hover is real, as a tap would otherwise leave the card raised, and before the press so that one still sinks it.
+ * Lifted off its edge under a pointer, the press run backwards, by as much as the edge grows so its foot stays put.
+ * Only where hover is real, as a tap would otherwise leave the card raised, and before the press so that one still
+ * sinks it.
  */
 @media (hover: hover) {
   .card:has(.open:hover) {
@@ -204,9 +206,9 @@ h1 {
 }
 
 /**
- * A card without an icon shows its title's initials, in type that shrinks past two of them so that three take the
- * width two would. Drawn in the page's background, which `tint` holds the edge to 3:1 against, where the card's own
- * surface may fall short of it.
+ * A card without an icon shows its title's initials, in type that shrinks past two of them so that three take the width
+ * two would. Drawn in the page's background, which `tint` holds the edge to 3:1 against, where the card's own surface
+ * may fall short of it.
  */
 span.tile {
   --shrink: calc(2 / max(2, var(--letters, 1)));
@@ -371,8 +373,8 @@ button.open {
 }
 
 /**
- * The rest of the dialog, which `src/linux.ts` grows the font to fill from this size as the least. A phone is too narrow
- * for the eighty columns even at that, so there they scroll sideways.
+ * The rest of the dialog, which `src/linux.ts` grows the font to fill from this size as the least. A phone is too
+ * narrow for the eighty columns even at that, so there they scroll sideways.
  */
 .screen {
   display: flex;
